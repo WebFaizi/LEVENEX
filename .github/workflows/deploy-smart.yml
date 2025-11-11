@@ -21,9 +21,14 @@ jobs:
       with:
         fetch-depth: 1
         timeout: 600
+    
+    - name: Debug connection info
+      run: |
+        echo "Attempting to connect to host for domain: ${{ matrix.domain }}"
+        echo "Using port: 22"
       
     - name: Check if domain exists and deploy
-      uses: appleboy/ssh-action@v0.1.7
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.CPANEL_HOST }}
         username: ${{ secrets.CPANEL_USERNAME }}
@@ -34,10 +39,14 @@ jobs:
         script: |
           set -e
           DOMAIN="${{ matrix.domain }}"
-          DOMAIN_PATH="/home/$USER/public_html/$DOMAIN"
+          DOMAIN_PATH="$HOME/public_html/$DOMAIN"
           
-          echo "Starting deployment for $DOMAIN..."
+          echo "=== Deployment Information ==="
+          echo "Domain: $DOMAIN"
           echo "Target path: $DOMAIN_PATH"
+          echo "Current user: $(whoami)"
+          echo "Home directory: $HOME"
+          echo "=============================="
           
           # Check if domain directory exists
           if [ -d "$DOMAIN_PATH" ]; then
@@ -53,10 +62,10 @@ jobs:
               git pull origin main
             else
               echo "No git repository found, cloning fresh..."
-              cd ..
-              rm -rf "$DOMAIN_PATH"
-              mkdir -p "$DOMAIN_PATH"
-              cd "$DOMAIN_PATH"
+              cd "$HOME/public_html"
+              rm -rf "$DOMAIN"
+              mkdir -p "$DOMAIN"
+              cd "$DOMAIN"
               git clone ${{ secrets.REPO_URL }} .
             fi
           else
@@ -67,8 +76,10 @@ jobs:
           fi
           
           # Set proper permissions
-          find "$DOMAIN_PATH" -type d -exec chmod 755 {} \;
-          find "$DOMAIN_PATH" -type f -exec chmod 644 {} \;
+          echo "Setting permissions..."
+          find "$DOMAIN_PATH" -type d -exec chmod 755 {} \; 2>/dev/null || true
+          find "$DOMAIN_PATH" -type f -exec chmod 644 {} \; 2>/dev/null || true
           
           echo "Deployment completed successfully for $DOMAIN"
-          ls -la "$DOMAIN_PATH"
+          echo "Directory contents:"
+          ls -la "$DOMAIN_PATH" | head -20
