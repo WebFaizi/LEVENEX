@@ -1,0 +1,59 @@
+name: Smart Deploy to Multiple Domains
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        domain:
+          - domain1.com
+          - domain2.com
+          - domain3.com
+          - domain4.com
+          - domain5.com
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Check if domain exists and deploy
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.CPANEL_HOST }}
+        username: ${{ secrets.CPANEL_USERNAME }}
+        password: ${{ secrets.CPANEL_PASSWORD }}
+        port: 22
+        script: |
+          DOMAIN="${{ matrix.domain }}"
+          DOMAIN_PATH="/home/$USER/public_html/$DOMAIN"
+          
+          # Check if domain directory exists
+          if [ -d "$DOMAIN_PATH" ]; then
+            echo "Domain $DOMAIN exists, updating code..."
+            cd "$DOMAIN_PATH"
+            
+            # Check if git repo exists
+            if [ -d ".git" ]; then
+              echo "Git repository found, pulling latest changes..."
+              git pull origin main
+            else
+              echo "No git repository found, cloning fresh..."
+              rm -rf * .*
+              git clone ${{ secrets.REPO_URL }} .
+            fi
+          else
+            echo "Domain $DOMAIN not found, creating directory and cloning..."
+            mkdir -p "$DOMAIN_PATH"
+            cd "$DOMAIN_PATH"
+            git clone ${{ secrets.REPO_URL }} .
+          fi
+          
+          # Set proper permissions
+          chmod -R 755 "$DOMAIN_PATH"
+          
+          echo "Deployment completed for $DOMAIN"
