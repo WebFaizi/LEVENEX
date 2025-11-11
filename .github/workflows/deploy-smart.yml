@@ -30,9 +30,14 @@ jobs:
         password: ${{ secrets.CPANEL_PASSWORD }}
         port: 22
         timeout: 300s
+        command_timeout: 15m
         script: |
+          set -e
           DOMAIN="${{ matrix.domain }}"
           DOMAIN_PATH="/home/$USER/public_html/$DOMAIN"
+          
+          echo "Starting deployment for $DOMAIN..."
+          echo "Target path: $DOMAIN_PATH"
           
           # Check if domain directory exists
           if [ -d "$DOMAIN_PATH" ]; then
@@ -42,10 +47,16 @@ jobs:
             # Check if git repo exists
             if [ -d ".git" ]; then
               echo "Git repository found, pulling latest changes..."
+              git config --global --add safe.directory "$DOMAIN_PATH"
+              git fetch origin
+              git reset --hard origin/main
               git pull origin main
             else
               echo "No git repository found, cloning fresh..."
-              rm -rf * .* 2>/dev/null || true
+              cd ..
+              rm -rf "$DOMAIN_PATH"
+              mkdir -p "$DOMAIN_PATH"
+              cd "$DOMAIN_PATH"
               git clone ${{ secrets.REPO_URL }} .
             fi
           else
@@ -56,6 +67,8 @@ jobs:
           fi
           
           # Set proper permissions
-          chmod -R 755 "$DOMAIN_PATH"
+          find "$DOMAIN_PATH" -type d -exec chmod 755 {} \;
+          find "$DOMAIN_PATH" -type f -exec chmod 644 {} \;
           
-          echo "Deployment completed for $DOMAIN"
+          echo "Deployment completed successfully for $DOMAIN"
+          ls -la "$DOMAIN_PATH"
