@@ -26,9 +26,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ──────────────────────
-      # 1. SETUP NODE + CACHE (point to correct package.json)
-      # ──────────────────────
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -38,13 +35,10 @@ jobs:
             LAPTOPRENTALFRONTEND/package-lock.json
             LAPTOPRENTALBACKEND/package-lock.json
 
-      # ──────────────────────
-      # 2. INSTALL + BUILD FRONTEND
-      # ──────────────────────
       - name: Install Frontend Dependencies
         run: |
           cd LAPTOPRENTALFRONTEND
-          npm ci   # uses package-lock.json → super fast + reproducible
+          npm ci
 
       - name: Build Next.js Frontend
         run: |
@@ -53,56 +47,35 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_URL: https://${{ matrix.domain }}
 
-      # ──────────────────────
-      # 3. INSTALL BACKEND (if needed)
-      # ──────────────────────
       - name: Install Backend Dependencies
         run: |
-          cd LAPTOPRENTALBACKEND
-          npm ci
-        continue-on-error: true   # remove if backend is required
+          cd LAPTOPRENTALBACKEND && npm ci || echo "No backend"
+        continue-on-error: true
 
-      # ──────────────────────
-      # 4. PREPARE DEPLOY PACKAGE
-      # ──────────────────────
       - name: Prepare production files
         run: |
           mkdir -p deploy-package
-
-          # Frontend: copy built .next + public + package.json
           cp -r LAPTOPRENTALFRONTEND/.next deploy-package/
           cp -r LAPTOPRENTALFRONTEND/public deploy-package/ || true
           cp LAPTOPRENTALFRONTEND/package.json deploy-package/
           cp LAPTOPRENTALFRONTEND/package-lock.json deploy-package/ || true
-
-          # Backend: copy everything
           mkdir -p deploy-package/LAPTOPRENTALBACKEND
           cp -r LAPTOPRENTALBACKEND/* deploy-package/LAPTOPRENTALBACKEND/ || true
 
-      # ──────────────────────
-      # 5. DEPLOY VIA SFTP (FAST & RELIABLE)
-      # ──────────────────────
-      - name: Deploy to cPanel via SFTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      # ───── SFTP UPLOAD (WORKS EVERY TIME) ─────
+      - name: Deploy via SFTP
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: ${{ secrets.CPANEL_HOST }}
+          host: ${{ secrets.CPANEL_HOST }}
           username: ${{ secrets.CPANEL_USERNAME }}
           password: ${{ secrets.CPANEL_PASSWORD }}
-          port: 21
-          protocol: ftps
-          local-dir: ./deploy-package/
-          server-dir: /public_html/${{ matrix.domain }}/
-          dangerous-clean-slate: true
-          exclude: |
-            **/.git**
-            **/node_modules/**
-            **/*.log
-            **/*.pid
+          port: 22
+          source: "deploy-package/*"
+          target: "/home/${{ secrets.CPANEL_USERNAME }}/public_html/${{ matrix.domain }}/"
+          strip_components: 1
+          overwrite: true
 
-      # ──────────────────────
-      # 6. RESTART NODE APPS VIA SSH
-      # ──────────────────────
-      - name: Restart Node.js apps
+      - name: Fix permissions & restart
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.CPANEL_HOST }}
@@ -114,23 +87,24 @@ jobs:
             DOMAIN_PATH="$HOME/public_html/$DOMAIN"
             cd "$DOMAIN_PATH"
 
+            # Permissions
+            find . -type d -exec chmod 755 {} \;
+            find . -type f -exec chmod 644 {} \;
+
             # Kill old processes
             pkill -f "node.*${DOMAIN}" || true
 
-            # Start Backend
+            # Start backend
             if [ -d "LAPTOPRENTALBACKEND" ]; then
               cd LAPTOPRENTALBACKEND
               npm install --production
               PORT=${{ matrix.backend_port }} nohup npm start > backend.log 2>&1 &
               echo $! > backend.pid
-              echo "Backend started on port ${{ matrix.backend_port }}"
               cd ..
             fi
 
-            # Start Frontend (Next.js)
+            # Start frontend
             PORT=${{ matrix.frontend_port }} nohup npm start > app.log 2>&1 &
             echo $! > app.pid
 
-            echo "Deployed & restarted ${{ matrix.domain }}"
-            echo "Frontend → http://localhost:${{ matrix.frontend_port }}"
-            echo "Backend  → http://localhost:${{ matrix.backend_port }}"
+            echo "Deployed: https://${DOMAIN}"
