@@ -21,6 +21,34 @@ jobs:
       with:
         fetch-depth: 1
 
+    - name: Debug Node.js Installation
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.CPANEL_HOST }}
+        username: ${{ secrets.CPANEL_USERNAME }}
+        password: ${{ secrets.CPANEL_PASSWORD }}
+        port: 22
+        script: |
+          export LC_ALL=C
+          echo "=== Checking Node.js Installation ==="
+          echo "Home directory:"
+          ls -la "$HOME" | grep -E "node|nvm"
+          echo ""
+          echo "Looking for nodevenv:"
+          find "$HOME" -maxdepth 2 -name "nodevenv" -type d 2>/dev/null
+          echo ""
+          echo "Looking for node binaries:"
+          find "$HOME" -name "node" -type f 2>/dev/null | head -5
+          echo ""
+          echo "PATH variable:"
+          echo $PATH
+          echo ""
+          echo "Which node:"
+          which node 2>/dev/null || echo "node not in PATH"
+          echo ""
+          echo "Which npm:"
+          which npm 2>/dev/null || echo "npm not in PATH"
+
     - name: Deploy to cPanel (Node.js Fixed)
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -66,23 +94,73 @@ jobs:
           fi
 
           # === AUTO DETECT NODE.JS PATH (Works on 99% of cPanel servers) ===
-          if [ -f "/usr/local/bin/npm" ]; then
-            NPM_CMD="/usr/local/bin/npm"
-            NODE_CMD="/usr/local/bin/node"
-          elif [ -f "$HOME/.nvm/nvm.sh" ]; then
+          echo "Searching for Node.js installation..."
+          
+          # Method 1: cPanel Node.js App (most common)
+          if [ -d "$HOME/nodevenv" ]; then
+            echo "Found cPanel Node.js environment"
+            # Find the Python-style venv for Node
+            VENV_PATH=$(find "$HOME/nodevenv" -name "bin" -type d | head -1)
+            if [ -n "$VENV_PATH" ]; then
+              source "$VENV_PATH/activate"
+              NPM_CMD="npm"
+              NODE_CMD="node"
+              echo "Activated Node.js from: $VENV_PATH"
+            fi
+          fi
+          
+          # Method 2: Check common cPanel paths
+          if [ -z "$NPM_CMD" ]; then
+            for nodepath in \
+              /opt/cpanel/ea-nodejs20/bin \
+              /opt/cpanel/ea-nodejs18/bin \
+              /opt/cpanel/ea-nodejs16/bin \
+              /usr/local/bin \
+              /usr/bin \
+              "$HOME/.nvm/versions/node/*/bin"
+            do
+              if [ -f "$nodepath/npm" ]; then
+                NPM_CMD="$nodepath/npm"
+                NODE_CMD="$nodepath/node"
+                echo "Found Node.js at: $nodepath"
+                break
+              fi
+            done
+          fi
+          
+          # Method 3: Use NVM if available
+          if [ -z "$NPM_CMD" ] && [ -f "$HOME/.nvm/nvm.sh" ]; then
+            echo "Loading NVM..."
+            export NVM_DIR="$HOME/.nvm"
             . "$HOME/.nvm/nvm.sh"
+            nvm use --lts 2>/dev/null || nvm use default
             NPM_CMD="npm"
             NODE_CMD="node"
-          elif command -v npm >/dev/null 2>&1; then
-            NPM_CMD="npm"
-            NODE_CMD="node"
-          else
-            echo "ERROR: npm not found! Please install Node.js via cPanel → Setup Node.js App"
+          fi
+          
+          # Method 4: Use system PATH
+          if [ -z "$NPM_CMD" ]; then
+            if command -v npm >/dev/null 2>&1; then
+              NPM_CMD="npm"
+              NODE_CMD="node"
+              echo "Found Node.js in system PATH"
+            fi
+          fi
+          
+          # Final check
+          if [ -z "$NPM_CMD" ]; then
+            echo "ERROR: npm not found!"
+            echo "Please check cPanel → Setup Node.js App and ensure app is created"
+            echo "Current PATH: $PATH"
+            echo "Home directory contents:"
+            ls -la "$HOME" | grep -E "node|nvm"
             exit 1
           fi
 
           echo "Using npm: $NPM_CMD"
           echo "Using node: $NODE_CMD"
+          $NODE_CMD --version
+          $NPM_CMD --version
 
           # Set permissions
           find "$DOMAIN_PATH" -type d -exec chmod 755 {} \; 2>/dev/null || true
