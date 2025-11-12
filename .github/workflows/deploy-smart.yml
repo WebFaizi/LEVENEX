@@ -21,36 +21,14 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 1
-
-    - name: Debug Node.js Installation
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.CPANEL_HOST }}
-        username: ${{ secrets.CPANEL_USERNAME }}
-        password: ${{ secrets.CPANEL_PASSWORD }}
-        port: 22
-        script: |
-          export LC_ALL=C
-          echo "=== Checking Node.js Installation ==="
-          echo "Home directory:"
-          ls -la "$HOME" | grep -E "node|nvm"
-          echo ""
-          echo "Looking for nodevenv:"
-          find "$HOME" -maxdepth 2 -name "nodevenv" -type d 2>/dev/null
-          echo ""
-          echo "Looking for node binaries:"
-          find "$HOME" -name "node" -type f 2>/dev/null | head -5
-          echo ""
-          echo "PATH variable:"
-          echo $PATH
-          echo ""
-          echo "Which node:"
-          which node 2>/dev/null || echo "node not in PATH"
-          echo ""
-          echo "Which npm:"
-          which npm 2>/dev/null || echo "npm not in PATH"
-
-    - name: Deploy to cPanel (Node.js Fixed)
+        timeout: 600
+    
+    - name: Debug connection info
+      run: |
+        echo "Attempting to connect to host for domain: ${{ matrix.domain }}"
+        echo "Using port: 22"
+      
+    - name: Check if domain exists and deploy
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.CPANEL_HOST }}
@@ -58,212 +36,137 @@ jobs:
         password: ${{ secrets.CPANEL_PASSWORD }}
         port: 22
         timeout: 300s
-        command_timeout: 20m
+        command_timeout: 15m
         script: |
-          # === FIX: gettext loop + clean environment ===
-          export LC_ALL=C
-          export LANG=C
-          unset LANGUAGE
-          exec bash --norc --noprofile -c "$(cat <<'EOF'
-
           set -e
-
           DOMAIN="${{ matrix.domain }}"
           DOMAIN_PATH="$HOME/public_html/$DOMAIN"
-
-          echo "=== Deploying to $DOMAIN ==="
-          echo "Path: $DOMAIN_PATH"
-
-          # Go to domain directory
-          mkdir -p "$DOMAIN_PATH"
-          cd "$DOMAIN_PATH"
-
-          # Git update
-          if [ -d ".git" ]; then
-            echo "Updating existing repo..."
-            git config --global --add safe.directory "$DOMAIN_PATH"
-            git fetch --all
-            git reset --hard origin/main
-            git clean -fd
-            git pull origin main
-          else
-            echo "Cloning fresh repo..."
-            cd "$HOME/public_html"
-            rm -rf "$DOMAIN"
-            git clone ${{ secrets.REPO_URL }} "$DOMAIN"
-            cd "$DOMAIN"
-          fi
-
-          # === AUTO DETECT NODE.JS PATH (Works on 99% of cPanel servers) ===
-          echo "Searching for Node.js installation..."
-          echo "Debug: Current domain is $DOMAIN"
           
-          # Method 1: cPanel Node.js App - Deep search
-          if [ -d "$HOME/nodevenv" ]; then
-            echo "Found cPanel Node.js environment at: $HOME/nodevenv"
-            echo "Listing nodevenv structure:"
-            ls -la "$HOME/nodevenv/" 2>/dev/null || true
+          echo "=== Deployment Information ==="
+          echo "Domain: $DOMAIN"
+          echo "Target path: $DOMAIN_PATH"
+          echo "Current user: $(whoami)"
+          echo "Home directory: $HOME"
+          echo "=============================="
+          
+          # Check if domain directory exists
+          if [ -d "$DOMAIN_PATH" ]; then
+            echo "Domain $DOMAIN exists, updating code..."
+            cd "$DOMAIN_PATH"
             
-            # Search for node binary in all nested directories
-            echo "Searching for node binaries recursively..."
-            NODE_BINARY=$(find "$HOME/nodevenv" -type f -name "node" -executable 2>/dev/null | head -1)
-            
-            if [ -n "$NODE_BINARY" ]; then
-              NODE_DIR=$(dirname "$NODE_BINARY")
-              echo "Found node binary at: $NODE_BINARY"
-              echo "Node directory: $NODE_DIR"
-              
-              # Check if npm exists in the same directory
-              if [ -f "$NODE_DIR/npm" ]; then
-                NPM_CMD="$NODE_DIR/npm"
-                NODE_CMD="$NODE_BINARY"
-                export PATH="$NODE_DIR:$PATH"
-                echo "✓ Using Node.js from: $NODE_DIR"
-              else
-                echo "Warning: npm not found in $NODE_DIR, searching for npm..."
-                NPM_BINARY=$(find "$HOME/nodevenv" -type f -name "npm" 2>/dev/null | head -1)
-                if [ -n "$NPM_BINARY" ]; then
-                  NPM_CMD="$NPM_BINARY"
-                  NODE_CMD="$NODE_BINARY"
-                  export PATH="$NODE_DIR:$PATH"
-                  echo "✓ Using npm from: $(dirname $NPM_BINARY)"
-                fi
-              fi
+            # Check if git repo exists
+            if [ -d ".git" ]; then
+              echo "Git repository found, pulling latest changes..."
+              git config --global --add safe.directory "$DOMAIN_PATH"
+              git fetch origin
+              git reset --hard origin/main
+              git pull origin main
             else
-              echo "No node binary found in nodevenv directory"
-              echo "Complete nodevenv structure:"
-              find "$HOME/nodevenv" -maxdepth 3 -type f 2>/dev/null | head -20
+              echo "No git repository found, cloning fresh..."
+              cd "$HOME/public_html"
+              rm -rf "$DOMAIN"
+              mkdir -p "$DOMAIN"
+              cd "$DOMAIN"
+              git clone ${{ secrets.REPO_URL }} .
             fi
+          else
+            echo "Domain $DOMAIN not found, creating directory and cloning..."
+            mkdir -p "$DOMAIN_PATH"
+            cd "$DOMAIN_PATH"
+            git clone ${{ secrets.REPO_URL }} .
           fi
           
-          # Method 2: Check common cPanel paths
-          if [ -z "$NPM_CMD" ]; then
-            echo "Trying common cPanel paths..."
-            for nodepath in \
-              /opt/cpanel/ea-nodejs20/bin \
-              /opt/cpanel/ea-nodejs18/bin \
-              /opt/cpanel/ea-nodejs16/bin \
-              /usr/local/bin \
-              /usr/bin
-            do
-              if [ -f "$nodepath/npm" ]; then
-                NPM_CMD="$nodepath/npm"
-                NODE_CMD="$nodepath/node"
-                export PATH="$nodepath:$PATH"
-                echo "Found Node.js at: $nodepath"
-                break
-              fi
-            done
-          fi
-          
-          # Method 3: Use NVM if available
-          if [ -z "$NPM_CMD" ] && [ -f "$HOME/.nvm/nvm.sh" ]; then
-            echo "Loading NVM..."
-            export NVM_DIR="$HOME/.nvm"
-            . "$HOME/.nvm/nvm.sh"
-            nvm use --lts 2>/dev/null || nvm use default
-            NPM_CMD="npm"
-            NODE_CMD="node"
-          fi
-          
-          # Method 4: Use system PATH
-          if [ -z "$NPM_CMD" ]; then
-            if command -v npm >/dev/null 2>&1; then
-              NPM_CMD="npm"
-              NODE_CMD="node"
-              echo "Found Node.js in system PATH"
-            fi
-          fi
-          
-          # Final check
-          if [ -z "$NPM_CMD" ]; then
-            echo ""
-            echo "=========================================="
-            echo "ERROR: npm not found!"
-            echo "=========================================="
-            echo "Troubleshooting information:"
-            echo ""
-            echo "1. Check cPanel Setup Node.js App"
-            echo "   - Go to cPanel → Software → Setup Node.js App"
-            echo "   - Ensure Node.js app is created for: $DOMAIN"
-            echo "   - Application root: $DOMAIN_PATH"
-            echo ""
-            echo "2. nodevenv structure found:"
-            find "$HOME/nodevenv" -maxdepth 4 2>/dev/null | head -30
-            echo ""
-            echo "3. If you see your domain above but no 'bin' folder,"
-            echo "   you need to create the Node.js app in cPanel first."
-            echo ""
-            exit 1
-          fi
-
-          echo ""
-          echo "=========================================="
-          echo "✓ Node.js Configuration"
-          echo "=========================================="
-          echo "NPM Path: $NPM_CMD"
-          echo "Node Path: $NODE_CMD"
-          echo "Node Version: $($NODE_CMD --version)"
-          echo "NPM Version: $($NPM_CMD --version)"
-          echo "=========================================="
-          echo ""
-
-          # Set permissions
+          # Set proper permissions
+          echo "Setting permissions..."
           find "$DOMAIN_PATH" -type d -exec chmod 755 {} \; 2>/dev/null || true
           find "$DOMAIN_PATH" -type f -exec chmod 644 {} \; 2>/dev/null || true
-
-          # === MONOREPO: Frontend + Backend ===
+          
+          echo "Deployment completed successfully for $DOMAIN"
+          echo "Directory contents:"
+          ls -la "$DOMAIN_PATH" | head -20
+          
+          # Navigate to project directory
+          cd "$DOMAIN_PATH"
+          
+          # Check if this is a monorepo with frontend and backend
           if [ -d "LAPTOPRENTALFRONTEND" ] && [ -d "LAPTOPRENTALBACKEND" ]; then
-            echo "Monorepo detected"
-
-            case "$DOMAIN" in
-              "digitalstandeeonrent.in")  FRONTEND_PORT=3000; BACKEND_PORT=5000 ;;
-              "rentalnearme.in")          FRONTEND_PORT=3001; BACKEND_PORT=5001 ;;
-              *)                          FRONTEND_PORT=3002; BACKEND_PORT=5002 ;;
-            esac
-
-            # --- BACKEND ---
-            echo "Deploying Backend → port $BACKEND_PORT"
+            echo "=== Detected Frontend and Backend structure ==="
+            
+            # Get port based on domain
+            if [ "$DOMAIN" = "digitalstandeeonrent.in" ]; then
+              FRONTEND_PORT=3000
+              BACKEND_PORT=5000
+            elif [ "$DOMAIN" = "rentalnearme.in" ]; then
+              FRONTEND_PORT=3001
+              BACKEND_PORT=5001
+            else
+              FRONTEND_PORT=3002
+              BACKEND_PORT=5002
+            fi
+            
+            # Deploy Backend
+            echo "=== Setting up Backend on port $BACKEND_PORT ==="
             cd "$DOMAIN_PATH/LAPTOPRENTALBACKEND"
-            $NPM_CMD ci --production 2>/dev/null || $NPM_CMD install --production
-            pkill -f "${DOMAIN}-backend" || true
-            sleep 2
-            PORT=$BACKEND_PORT \
-              nohup $NODE_CMD server.js > "$DOMAIN_PATH/backend.log" 2>&1 &
-            echo $! > "$DOMAIN_PATH/backend.pid"
-            echo "Backend started (PID: $(cat $DOMAIN_PATH/backend.pid))"
-
-            # --- FRONTEND ---
-            echo "Deploying Frontend → port $FRONTEND_PORT"
+            echo "Installing backend dependencies..."
+            npm install --production || npm install
+            
+            # Kill existing backend process if running
+            pkill -f "node.*${DOMAIN}-backend" || true
+            
+            echo "Starting backend application..."
+            PORT=$BACKEND_PORT nohup npm start > backend.log 2>&1 &
+            echo $! > backend.pid
+            echo "Backend started with PID: $(cat backend.pid)"
+            
+            # Deploy Frontend
+            echo "=== Setting up Frontend on port $FRONTEND_PORT ==="
             cd "$DOMAIN_PATH/LAPTOPRENTALFRONTEND"
-            $NPM_CMD ci --production 2>/dev/null || $NPM_CMD install --production
-            $NPM_CMD run build
-            pkill -f "${DOMAIN}-frontend" || true
-            sleep 2
-            PORT=$FRONTEND_PORT \
-              nohup $NODE_CMD .next/standalone/server.js > "$DOMAIN_PATH/frontend.log" 2>&1 &
-            echo $! > "$DOMAIN_PATH/frontend.pid"
-            echo "Frontend started (PID: $(cat $DOMAIN_PATH/frontend.pid))"
-
-            echo "DEPLOY SUCCESS: $DOMAIN"
-            echo "Frontend: http://$DOMAIN:$FRONTEND_PORT"
-            echo "Backend : http://$DOMAIN:$BACKEND_PORT"
-
-          # === SINGLE APP ===
+            echo "Installing frontend dependencies..."
+            npm install --production || npm install
+            
+            echo "Building Next.js application..."
+            npm run build
+            
+            # Kill existing frontend process if running
+            pkill -f "node.*${DOMAIN}-frontend" || true
+            
+            echo "Starting frontend application..."
+            PORT=$FRONTEND_PORT nohup npm start > frontend.log 2>&1 &
+            echo $! > frontend.pid
+            echo "Frontend started with PID: $(cat frontend.pid)"
+            
+            echo "=== Deployment Summary ==="
+            echo "Frontend running on port: $FRONTEND_PORT (PID: $(cat frontend.pid))"
+            echo "Backend running on port: $BACKEND_PORT (PID: $(cat backend.pid))"
+            echo "Check logs: frontend.log and backend.log"
+            
           else
-            echo "Single app detected"
-            PORT=3001
-            [ "$DOMAIN" = "digitalstandeeonrent.in" ] && PORT=3000
-
-            $NPM_CMD ci --production 2>/dev/null || $NPM_CMD install --production
-            $NPM_CMD run build
-            pkill -f "$DOMAIN" || true
-            sleep 2
-            PORT=$PORT nohup $NODE_CMD .next/standalone/server.js > "$DOMAIN_PATH/app.log" 2>&1 &
-            echo $! > "$DOMAIN_PATH/app.pid"
-            echo "App running on port $PORT (PID: $(cat $DOMAIN_PATH/app.pid))"
+            echo "=== Single application deployment ==="
+            # Install dependencies
+            echo "Installing dependencies..."
+            npm install --production || npm install
+            
+            # Build the Next.js application
+            echo "Building Next.js application..."
+            npm run build
+            
+            # Get port based on domain
+            if [ "$DOMAIN" = "digitalstandeeonrent.in" ]; then
+              PORT=3000
+            elif [ "$DOMAIN" = "rentalnearme.in" ]; then
+              PORT=3001
+            else
+              PORT=3002
+            fi
+            
+            # Kill existing process if running
+            pkill -f "node.*${DOMAIN}" || true
+            
+            # Start or restart the application
+            echo "Starting application on port $PORT..."
+            PORT=$PORT nohup npm start > app.log 2>&1 &
+            echo $! > app.pid
+            
+            echo "Application $DOMAIN is now running on port $PORT"
+            echo "PID: $(cat app.pid)"
           fi
-
-          echo "FULL DEPLOYMENT COMPLETED SUCCESSFULLY"
-          EOF
-          )"
