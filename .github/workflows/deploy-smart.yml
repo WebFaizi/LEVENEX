@@ -100,32 +100,54 @@ jobs:
           if [ -d "$HOME/nodevenv" ]; then
             echo "Found cPanel Node.js environment at: $HOME/nodevenv"
             
-            # Find all virtual environment directories
-            for venv_dir in "$HOME/nodevenv"/*/*/bin; do
-              if [ -f "$venv_dir/activate" ]; then
-                echo "Activating Node.js from: $venv_dir"
-                source "$venv_dir/activate"
-                NPM_CMD="npm"
-                NODE_CMD="node"
-                break
+            # First, try to find activate script in domain-specific or public_html directories
+            for search_path in \
+              "$HOME/nodevenv/$DOMAIN" \
+              "$HOME/nodevenv/public_html/$DOMAIN" \
+              "$HOME/nodevenv/public_html" \
+              "$HOME/nodevenv"/*
+            do
+              if [ -d "$search_path" ]; then
+                echo "Checking: $search_path"
+                # Look for bin/activate in nested structure
+                for venv_dir in "$search_path"/*/bin "$search_path"/bin; do
+                  if [ -f "$venv_dir/activate" ]; then
+                    echo "Found activate script at: $venv_dir"
+                    source "$venv_dir/activate"
+                    NPM_CMD="npm"
+                    NODE_CMD="node"
+                    break 2
+                  fi
+                done
+                
+                # Look for direct node binary
+                for venv_dir in "$search_path"/*/bin "$search_path"/bin; do
+                  if [ -f "$venv_dir/node" ]; then
+                    NPM_CMD="$venv_dir/npm"
+                    NODE_CMD="$venv_dir/node"
+                    export PATH="$venv_dir:$PATH"
+                    echo "Using Node.js directly from: $venv_dir"
+                    break 2
+                  fi
+                done
               fi
             done
-            
-            # If activation didn't work, try direct path
-            if [ -z "$NPM_CMD" ]; then
-              for venv_dir in "$HOME/nodevenv"/*/*/bin; do
-                if [ -f "$venv_dir/node" ]; then
-                  NPM_CMD="$venv_dir/npm"
-                  NODE_CMD="$venv_dir/node"
-                  export PATH="$venv_dir:$PATH"
-                  echo "Using Node.js directly from: $venv_dir"
-                  break
-                fi
-              done
+          fi
+          
+          # Method 2: Try CloudLinux selector (alternative cPanel setup)
+          if [ -z "$NPM_CMD" ] && [ -d "$HOME/nodevenv/$DOMAIN" ]; then
+            # CloudLinux stores it differently
+            CLOUDLINUX_NODE=$(find "$HOME/nodevenv/$DOMAIN" -name "node" -type f 2>/dev/null | head -1)
+            if [ -n "$CLOUDLINUX_NODE" ]; then
+              NODE_DIR=$(dirname "$CLOUDLINUX_NODE")
+              NPM_CMD="$NODE_DIR/npm"
+              NODE_CMD="$CLOUDLINUX_NODE"
+              export PATH="$NODE_DIR:$PATH"
+              echo "Found Node.js via CloudLinux at: $NODE_DIR"
             fi
           fi
           
-          # Method 2: Check common cPanel paths
+          # Method 3: Check common cPanel paths
           if [ -z "$NPM_CMD" ]; then
             for nodepath in \
               /opt/cpanel/ea-nodejs20/bin \
@@ -144,7 +166,7 @@ jobs:
             done
           fi
           
-          # Method 3: Use NVM if available
+          # Method 4: Use NVM if available
           if [ -z "$NPM_CMD" ] && [ -f "$HOME/.nvm/nvm.sh" ]; then
             echo "Loading NVM..."
             export NVM_DIR="$HOME/.nvm"
@@ -154,7 +176,7 @@ jobs:
             NODE_CMD="node"
           fi
           
-          # Method 4: Use system PATH
+          # Method 5: Use system PATH
           if [ -z "$NPM_CMD" ]; then
             if command -v npm >/dev/null 2>&1; then
               NPM_CMD="npm"
@@ -166,13 +188,19 @@ jobs:
           # Final check
           if [ -z "$NPM_CMD" ]; then
             echo "ERROR: npm not found!"
+            echo ""
+            echo "Debug information:"
+            echo "Domain: $DOMAIN"
             echo "Searched locations:"
-            echo "  - $HOME/nodevenv"
+            echo "  - $HOME/nodevenv/$DOMAIN"
+            echo "  - $HOME/nodevenv/public_html/$DOMAIN"
             echo "  - /opt/cpanel/ea-nodejs*/bin"
             echo "  - System PATH"
             echo ""
-            echo "Available nodevenv directories:"
-            ls -la "$HOME/nodevenv" 2>/dev/null || echo "None found"
+            echo "nodevenv structure:"
+            find "$HOME/nodevenv" -type f -name "node" 2>/dev/null || echo "No node binaries found"
+            echo ""
+            echo "Please ensure Node.js app is set up in cPanel for domain: $DOMAIN"
             exit 1
           fi
 
