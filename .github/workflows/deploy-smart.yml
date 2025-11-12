@@ -8,7 +8,6 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     strategy:
       matrix:
         domain:
@@ -47,22 +46,31 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_URL: https://${{ matrix.domain }}
 
-      - name: Install Backend Dependencies
+      - name: Install Backend Dependencies (if exists)
         run: |
-          cd LAPTOPRENTALBACKEND && npm ci || echo "No backend"
+          cd LAPTOPRENTALBACKEND && npm ci || echo "No backend folder - skipping"
         continue-on-error: true
 
-      - name: Prepare production files
+      - name: Prepare production files (correct folder structure)
         run: |
           mkdir -p deploy-package
-          cp -r LAPTOPRENTALFRONTEND/.next deploy-package/
-          cp -r LAPTOPRENTALFRONTEND/public deploy-package/ || true
-          cp LAPTOPRENTALFRONTEND/package.json deploy-package/
-          cp LAPTOPRENTALFRONTEND/package-lock.json deploy-package/ || true
-          mkdir -p deploy-package/LAPTOPRENTALBACKEND
-          cp -r LAPTOPRENTALBACKEND/* deploy-package/LAPTOPRENTALBACKEND/ || true
 
-      # ───── SFTP UPLOAD (WORKS EVERY TIME) ─────
+          # Frontend: preserve folder structure
+          mkdir -p deploy-package/LAPTOPRENTALFRONTEND
+          cp -r LAPTOPRENTALFRONTEND/.next deploy-package/LAPTOPRENTALFRONTEND/
+          cp -r LAPTOPRENTALFRONTEND/public deploy-package/LAPTOPRENTALFRONTEND/ || true
+          cp LAPTOPRENTALFRONTEND/package.json deploy-package/LAPTOPRENTALFRONTEND/
+          cp LAPTOPRENTALFRONTEND/package-lock.json deploy-package/LAPTOPRENTALFRONTEND/ || true
+          cp LAPTOPRENTALFRONTEND/next.config.js deploy-package/LAPTOPRENTALFRONTEND/ || true
+          cp LAPTOPRENTALFRONTEND/.env* deploy-package/LAPTOPRENTALFRONTEND/ || true
+
+          # Backend: preserve folder
+          mkdir -p deploy-package/LAPTOPRENTALBACKEND
+          if [ -d "LAPTOPRENTALBACKEND" ]; then
+            cp -r LAPTOPRENTALBACKEND/* deploy-package/LAPTOPRENTALBACKEND/ || true
+          fi
+
+      # Deploy via SFTP
       - name: Deploy via SFTP
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -75,7 +83,8 @@ jobs:
           strip_components: 1
           overwrite: true
 
-      - name: Fix permissions & restart
+      # Fix permissions & restart apps
+      - name: Fix permissions & restart Node.js apps
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.CPANEL_HOST }}
@@ -87,24 +96,43 @@ jobs:
             DOMAIN_PATH="$HOME/public_html/$DOMAIN"
             cd "$DOMAIN_PATH"
 
-            # Permissions
+            echo "Deploying to: $DOMAIN_PATH"
+
+            # Set proper permissions
             find . -type d -exec chmod 755 {} \;
             find . -type f -exec chmod 644 {} \;
+            chmod 755 LAPTOPRENTALFRONTEND/.next/cache || true
 
-            # Kill old processes
-            pkill -f "node.*${DOMAIN}" || true
+            # Kill old processes using domain name
+            pkill -f "node.*$DOMAIN" || true
+            sleep 2
 
-            # Start backend
-            if [ -d "LAPTOPRENTALBACKEND" ]; then
+            # Start Backend
+            if [ -d "LAPTOPRENTALBACKEND" ] && [ -f "LAPTOPRENTALBACKEND/package.json" ]; then
               cd LAPTOPRENTALBACKEND
-              npm install --production
-              PORT=${{ matrix.backend_port }} nohup npm start > backend.log 2>&1 &
-              echo $! > backend.pid
-              cd ..
+              echo "Starting backend on port ${{ matrix.backend_port }}..."
+              npm install --production --silent
+              PORT=${{ matrix.backend_port }} nohup npm start > "$DOMAIN_PATH/backend.log" 2>&1 &
+              echo $! > "$DOMAIN_PATH/backend.pid"
+              cd "$DOMAIN_PATH"
+            else
+              echo "No backend found, skipping."
             fi
 
-            # Start frontend
-            PORT=${{ matrix.frontend_port }} nohup npm start > app.log 2>&1 &
-            echo $! > app.pid
+            # Start Frontend (must run from inside LAPTOPRENTALFRONTEND)
+            if [ -d "LAPTOPRENTALFRONTEND" ] && [ -f "LAPTOPRENTALFRONTEND/package.json" ]; then
+              cd LAPTOPRENTALFRONTEND
+              echo "Starting frontend on port ${{ matrix.frontend_port }}..."
+              npm install --production --silent
+              PORT=${{ matrix.frontend_port }} nohup npm start > "$DOMAIN_PATH/app.log" 2>&1 &
+              echo $! > "$DOMAIN_PATH/app.pid"
+              cd "$DOMAIN_PATH"
+            else
+              echo "No frontend found!"
+            fi
 
-            echo "Deployed: https://${DOMAIN}"
+            # Final status
+            echo "Deployed successfully: https://$DOMAIN"
+            echo "Frontend PID: $(cat app.pid 2>/dev/null || echo 'N/A')"
+            echo "Backend PID: $(cat backend.pid 2>/dev/null || echo 'N/A')"
+            echo "Check logs: app.log | backend.log"
