@@ -103,58 +103,51 @@ jobs:
               BACKEND_PORT=5002
             fi
             
-            # Install PM2 globally if not already installed
-            if ! command -v pm2 &> /dev/null; then
-              echo "Installing PM2..."
-              npm install -g pm2
-            fi
-            
             # Deploy Backend
             echo "=== Setting up Backend on port $BACKEND_PORT ==="
             cd "$DOMAIN_PATH/LAPTOPRENTALBACKEND"
             echo "Installing backend dependencies..."
-            npm install --production
+            npm install --production || npm install
+            
+            # Kill existing backend process if running
+            pkill -f "node.*${DOMAIN}-backend" || true
             
             echo "Starting backend application..."
-            pm2 delete "${DOMAIN}-backend" 2>/dev/null || true
-            pm2 start npm --name "${DOMAIN}-backend" -- start -- -p $BACKEND_PORT
+            PORT=$BACKEND_PORT nohup npm start > backend.log 2>&1 &
+            echo $! > backend.pid
+            echo "Backend started with PID: $(cat backend.pid)"
             
             # Deploy Frontend
             echo "=== Setting up Frontend on port $FRONTEND_PORT ==="
             cd "$DOMAIN_PATH/LAPTOPRENTALFRONTEND"
             echo "Installing frontend dependencies..."
-            npm install --production
+            npm install --production || npm install
             
             echo "Building Next.js application..."
             npm run build
             
-            echo "Starting frontend application..."
-            pm2 delete "${DOMAIN}-frontend" 2>/dev/null || true
-            pm2 start npm --name "${DOMAIN}-frontend" -- start -- -p $FRONTEND_PORT
+            # Kill existing frontend process if running
+            pkill -f "node.*${DOMAIN}-frontend" || true
             
-            # Save PM2 configuration
-            pm2 save
+            echo "Starting frontend application..."
+            PORT=$FRONTEND_PORT nohup npm start > frontend.log 2>&1 &
+            echo $! > frontend.pid
+            echo "Frontend started with PID: $(cat frontend.pid)"
             
             echo "=== Deployment Summary ==="
-            echo "Frontend running on port: $FRONTEND_PORT"
-            echo "Backend running on port: $BACKEND_PORT"
-            pm2 list
+            echo "Frontend running on port: $FRONTEND_PORT (PID: $(cat frontend.pid))"
+            echo "Backend running on port: $BACKEND_PORT (PID: $(cat backend.pid))"
+            echo "Check logs: frontend.log and backend.log"
             
           else
             echo "=== Single application deployment ==="
             # Install dependencies
             echo "Installing dependencies..."
-            npm install --production
+            npm install --production || npm install
             
             # Build the Next.js application
             echo "Building Next.js application..."
             npm run build
-            
-            # Install PM2 globally if not already installed
-            if ! command -v pm2 &> /dev/null; then
-              echo "Installing PM2..."
-              npm install -g pm2
-            fi
             
             # Get port based on domain
             if [ "$DOMAIN" = "digitalstandeeonrent.in" ]; then
@@ -165,12 +158,14 @@ jobs:
               PORT=3002
             fi
             
-            # Start or restart the application with PM2
+            # Kill existing process if running
+            pkill -f "node.*${DOMAIN}" || true
+            
+            # Start or restart the application
             echo "Starting application on port $PORT..."
-            pm2 delete "$DOMAIN" 2>/dev/null || true
-            pm2 start npm --name "$DOMAIN" -- start -- -p $PORT
-            pm2 save
+            PORT=$PORT nohup npm start > app.log 2>&1 &
+            echo $! > app.pid
             
             echo "Application $DOMAIN is now running on port $PORT"
-            pm2 list
+            echo "PID: $(cat app.pid)"
           fi
