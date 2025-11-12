@@ -1,6 +1,5 @@
 name: Smart Deploy to Multiple Domains
 
-
 on:
   push:
     branches: [ main ]
