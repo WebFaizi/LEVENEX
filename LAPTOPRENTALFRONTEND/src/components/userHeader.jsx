@@ -588,7 +588,7 @@ export default function UserHeader() {
             )}
 
             {/* Logo */}
-            <div className="max-w-52 w-full">
+            {/* <div className="max-w-52 w-full">
               <Link href="/" className="block w-full">
                 <Avatar className="w-full h-10">
                   <AvatarFallback className="text-xl font-bold text-black">
@@ -596,7 +596,7 @@ export default function UserHeader() {
                   </AvatarFallback>
                 </Avatar>
               </Link>
-            </div>
+            </div> */}
             {/* Search Section */}
             {!isAuthPage && (
               <div className="hidden sm:flex flex-wrap items-center gap-2 grow 2xl:grow-0 lg:gap-4 w-full sm:w-5/12 lg:w-2/4">
