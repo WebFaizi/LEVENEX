@@ -21,12 +21,7 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Debug connection info
-      run: |
-        echo "Deploying to domain: ${{ matrix.domain }}"
-        echo "Host: ${{ secrets.CPANEL_HOST }}"
-
-    - name: Deploy to cPanel via SSH (Fixed gettext loop)
+    - name: Deploy to cPanel (Node.js Fixed)
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.CPANEL_HOST }}
@@ -36,146 +31,115 @@ jobs:
         timeout: 300s
         command_timeout: 20m
         script: |
-          # === CRITICAL FIX: Prevent gettext infinite loop on cPanel/CloudLinux ===
+          # === FIX: gettext loop + clean environment ===
           export LC_ALL=C
           export LANG=C
           unset LANGUAGE
-          unset LOCALE_ARCHIVE
-          unset GETTEXT
-          
-          # Run in clean bash environment (no .bashrc, no profile)
           exec bash --norc --noprofile -c "$(cat <<'EOF'
-          
+
           set -e
-          
+
           DOMAIN="${{ matrix.domain }}"
           DOMAIN_PATH="$HOME/public_html/$DOMAIN"
-          
-          echo "=== Deployment Started for $DOMAIN ==="
-          echo "Target Path: $DOMAIN_PATH"
-          echo "User: $(whoami)"
-          echo "Home: $HOME"
-          echo "========================================"
-          
-          # Ensure directory exists
-          if [ ! -d "$DOMAIN_PATH" ]; then
-            echo "Directory not found. Creating $DOMAIN_PATH..."
-            mkdir -p "$DOMAIN_PATH"
-          fi
-          
+
+          echo "=== Deploying to $DOMAIN ==="
+          echo "Path: $DOMAIN_PATH"
+
+          # Go to domain directory
+          mkdir -p "$DOMAIN_PATH"
           cd "$DOMAIN_PATH"
-          
-          # If .git exists → pull, else → fresh clone
+
+          # Git update
           if [ -d ".git" ]; then
-            echo "Git repo found. Updating..."
+            echo "Updating existing repo..."
             git config --global --add safe.directory "$DOMAIN_PATH"
             git fetch --all
             git reset --hard origin/main
             git clean -fd
             git pull origin main
           else
-            echo "No git repo. Cloning fresh..."
+            echo "Cloning fresh repo..."
             cd "$HOME/public_html"
             rm -rf "$DOMAIN"
             git clone ${{ secrets.REPO_URL }} "$DOMAIN"
             cd "$DOMAIN"
           fi
-          
-          # Set correct permissions
-          echo "Fixing permissions..."
+
+          # === AUTO DETECT NODE.JS PATH (Works on 99% of cPanel servers) ===
+          if [ -f "/usr/local/bin/npm" ]; then
+            NPM_CMD="/usr/local/bin/npm"
+            NODE_CMD="/usr/local/bin/node"
+          elif [ -f "$HOME/.nvm/nvm.sh" ]; then
+            . "$HOME/.nvm/nvm.sh"
+            NPM_CMD="npm"
+            NODE_CMD="node"
+          elif command -v npm >/dev/null 2>&1; then
+            NPM_CMD="npm"
+            NODE_CMD="node"
+          else
+            echo "ERROR: npm not found! Please install Node.js via cPanel → Setup Node.js App"
+            exit 1
+          fi
+
+          echo "Using npm: $NPM_CMD"
+          echo "Using node: $NODE_CMD"
+
+          # Set permissions
           find "$DOMAIN_PATH" -type d -exec chmod 755 {} \; 2>/dev/null || true
           find "$DOMAIN_PATH" -type f -exec chmod 644 {} \; 2>/dev/null || true
-          chmod -R 755 "$DOMAIN_PATH" 2>/dev/null || true
-          
-          echo "Code updated successfully."
-          echo "Contents:"
-          ls -la | head -15
-          
-          # === MONOREPO: Frontend + Backend Detection ===
+
+          # === MONOREPO: Frontend + Backend ===
           if [ -d "LAPTOPRENTALFRONTEND" ] && [ -d "LAPTOPRENTALBACKEND" ]; then
-            echo "Monorepo detected: Deploying Frontend + Backend"
-            
-            # Assign ports based on domain
+            echo "Monorepo detected"
+
             case "$DOMAIN" in
-              "digitalstandeeonrent.in")
-                FRONTEND_PORT=3000
-                BACKEND_PORT=5000
-                ;;
-              "rentalnearme.in")
-                FRONTEND_PORT=3001
-                BACKEND_PORT=5001
-                ;;
-              *)
-                FRONTEND_PORT=3002
-                BACKEND_PORT=5002
-                ;;
+              "digitalstandeeonrent.in")  FRONTEND_PORT=3000; BACKEND_PORT=5000 ;;
+              "rentalnearme.in")          FRONTEND_PORT=3001; BACKEND_PORT=5001 ;;
+              *)                          FRONTEND_PORT=3002; BACKEND_PORT=5002 ;;
             esac
-            
-            # === BACKEND ===
-            echo "Deploying Backend on port $BACKEND_PORT"
+
+            # --- BACKEND ---
+            echo "Deploying Backend → port $BACKEND_PORT"
             cd "$DOMAIN_PATH/LAPTOPRENTALBACKEND"
-            
-            npm ci --production 2>/dev/null || npm install --production
-            
-            # Kill old process
-            pkill -f "node.*${DOMAIN}-backend" || true
+            $NPM_CMD ci --production 2>/dev/null || $NPM_CMD install --production
+            pkill -f "${DOMAIN}-backend" || true
             sleep 2
-            
-            # Start new
             PORT=$BACKEND_PORT \
-              nohup npm start > "$DOMAIN_PATH/backend.log" 2>&1 &
+              nohup $NODE_CMD server.js > "$DOMAIN_PATH/backend.log" 2>&1 &
             echo $! > "$DOMAIN_PATH/backend.pid"
-            echo "Backend running on port $BACKEND_PORT (PID: $(cat $DOMAIN_PATH/backend.pid))"
-            
-            # === FRONTEND ===
-            echo "Deploying Frontend on port $FRONTEND_PORT"
+            echo "Backend started (PID: $(cat $DOMAIN_PATH/backend.pid))"
+
+            # --- FRONTEND ---
+            echo "Deploying Frontend → port $FRONTEND_PORT"
             cd "$DOMAIN_PATH/LAPTOPRENTALFRONTEND"
-            
-            npm ci --production 2>/dev/null || npm install --production
-            npm run build
-            
-            # Kill old frontend
-            pkill -f "node.*${DOMAIN}-frontend" || true
+            $NPM_CMD ci --production 2>/dev/null || $NPM_CMD install --production
+            $NPM_CMD run build
+            pkill -f "${DOMAIN}-frontend" || true
             sleep 2
-            
-            # Start new
             PORT=$FRONTEND_PORT \
-              nohup npm start > "$DOMAIN_PATH/frontend.log" 2>&1 &
+              nohup $NODE_CMD .next/standalone/server.js > "$DOMAIN_PATH/frontend.log" 2>&1 &
             echo $! > "$DOMAIN_PATH/frontend.pid"
-            echo "Frontend running on port $FRONTEND_PORT (PID: $(cat $DOMAIN_PATH/frontend.pid))"
-            
-            echo "MONOREPO DEPLOYMENT COMPLETE"
+            echo "Frontend started (PID: $(cat $DOMAIN_PATH/frontend.pid))"
+
+            echo "DEPLOY SUCCESS: $DOMAIN"
             echo "Frontend: http://$DOMAIN:$FRONTEND_PORT"
             echo "Backend : http://$DOMAIN:$BACKEND_PORT"
-            echo "Logs: frontend.log | backend.log"
-          
-          # === SINGLE NEXT.JS APP ===
+
+          # === SINGLE APP ===
           else
-            echo "Single Next.js app detected"
-            
-            case "$DOMAIN" in
-              "digitalstandeeonrent.in") PORT=3000 ;;
-              "rentalnearme.in")        PORT=3001 ;;
-              *)                        PORT=3002 ;;
-            esac
-            
-            npm ci --production 2>/dev/null || npm install --production
-            npm run build
-            
-            pkill -f "node.*${DOMAIN}" || true
+            echo "Single app detected"
+            PORT=3001
+            [ "$DOMAIN" = "digitalstandeeonrent.in" ] && PORT=3000
+
+            $NPM_CMD ci --production 2>/dev/null || $NPM_CMD install --production
+            $NPM_CMD run build
+            pkill -f "$DOMAIN" || true
             sleep 2
-            
-            PORT=$PORT \
-              nohup npm start > "$DOMAIN_PATH/app.log" 2>&1 &
+            PORT=$PORT nohup $NODE_CMD .next/standalone/server.js > "$DOMAIN_PATH/app.log" 2>&1 &
             echo $! > "$DOMAIN_PATH/app.pid"
-            
-            echo "SINGLE APP DEPLOYED"
-            echo "$DOMAIN running on port $PORT (PID: $(cat $DOMAIN_PATH/app.pid))"
-            echo "Log: app.log"
+            echo "App running on port $PORT (PID: $(cat $DOMAIN_PATH/app.pid))"
           fi
-          
-          echo "DEPLOYMENT SUCCESSFUL FOR $DOMAIN"
-          echo "============================================"
-          
+
+          echo "FULL DEPLOYMENT COMPLETED SUCCESSFULLY"
           EOF
           )"
