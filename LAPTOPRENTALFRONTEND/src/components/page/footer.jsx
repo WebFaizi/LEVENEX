@@ -59,42 +59,45 @@ export default function Footer({ userToken }) {
   }, [footerdata, listingData]);
 
   function handelRedirect(item, cityName) {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 
-    if (pathname == "/") {
-      router.push("/");
-    } else if (listingData.ListingType === "category_location") {
-      const locationName = item?.name
-        ?.toLowerCase()
-        .replace(/[.,()]/g, "")
-        .replace(/\s+/g, "-");
-      const newURL = `/${listingData.categoryDetails?.slug}-${locationName}/${listingData.categoryDetails?.unique_id}`;
-      router.push(newURL);
-    } else {
-      router.push("/");
-    }
-    let locationdata = {
-      area_name: item?.name || "",
-      current_area_id: item?._id || "",
-      current_city_id: item?.city_id,
-      current_location_id: item?._id || item?.city_id,
-      city_name: cityName || "",
-      location_type: "area",
-    };
-    dispatch(handleSearchValue(locationdata));
-    sessionStorage.setItem("location_data", JSON.stringify(locationdata));
-  }
+  let categorySlug = listingData.categoryDetails?.slug || "laptop-rental";
+  let uniqueId = listingData.categoryDetails?.unique_id || "3";
+
+  // Clean location name
+  const locationName = item?.name
+    ?.toLowerCase()
+    .replace(/[.,()]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  // Construct URL: /laptop-rental-umroli/3
+  const newURL = `/${categorySlug}-${locationName}/${uniqueId}`;
+
+  router.push(newURL);
+
+  // Update location data in Redux & sessionStorage
+  let locationdata = {
+    area_name: item?.name || "",
+    current_area_id: item?._id || "",
+    current_city_id: item?.city_id,
+    current_location_id: item?._id || item?.city_id,
+    city_name: cityName || "",
+    location_type: "area",
+  };
+
+  dispatch(handleSearchValue(locationdata));
+  sessionStorage.setItem("location_data", JSON.stringify(locationdata));
+}
 
   function handeleListingredirate(location) {
-    let newURL    
-    
-    if(listingData.categoryDetails?.slug){
-     newURL = `/${listingData.categoryDetails?.slug}-${location}/${listingData.categoryDetails?.unique_id}`;
-    }else{
-      newURL = `/laptop-rental-${location}/3`
-    }
-    router.push(newURL);
-  }
+  let categorySlug = listingData.categoryDetails?.slug || "laptop-rental";
+  let uniqueId = listingData.categoryDetails?.unique_id || "3";
+
+  const newURL = `/${categorySlug}-${location}/${uniqueId}`;
+  router.push(newURL);
+}
 
   return (
     <>
