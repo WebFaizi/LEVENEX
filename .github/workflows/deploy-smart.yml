@@ -98,14 +98,30 @@ jobs:
           
           # Method 1: cPanel Node.js App (most common)
           if [ -d "$HOME/nodevenv" ]; then
-            echo "Found cPanel Node.js environment"
-            # Find the Python-style venv for Node
-            VENV_PATH=$(find "$HOME/nodevenv" -name "bin" -type d | head -1)
-            if [ -n "$VENV_PATH" ]; then
-              source "$VENV_PATH/activate"
-              NPM_CMD="npm"
-              NODE_CMD="node"
-              echo "Activated Node.js from: $VENV_PATH"
+            echo "Found cPanel Node.js environment at: $HOME/nodevenv"
+            
+            # Find all virtual environment directories
+            for venv_dir in "$HOME/nodevenv"/*/*/bin; do
+              if [ -f "$venv_dir/activate" ]; then
+                echo "Activating Node.js from: $venv_dir"
+                source "$venv_dir/activate"
+                NPM_CMD="npm"
+                NODE_CMD="node"
+                break
+              fi
+            done
+            
+            # If activation didn't work, try direct path
+            if [ -z "$NPM_CMD" ]; then
+              for venv_dir in "$HOME/nodevenv"/*/*/bin; do
+                if [ -f "$venv_dir/node" ]; then
+                  NPM_CMD="$venv_dir/npm"
+                  NODE_CMD="$venv_dir/node"
+                  export PATH="$venv_dir:$PATH"
+                  echo "Using Node.js directly from: $venv_dir"
+                  break
+                fi
+              done
             fi
           fi
           
@@ -116,12 +132,12 @@ jobs:
               /opt/cpanel/ea-nodejs18/bin \
               /opt/cpanel/ea-nodejs16/bin \
               /usr/local/bin \
-              /usr/bin \
-              "$HOME/.nvm/versions/node/*/bin"
+              /usr/bin
             do
               if [ -f "$nodepath/npm" ]; then
                 NPM_CMD="$nodepath/npm"
                 NODE_CMD="$nodepath/node"
+                export PATH="$nodepath:$PATH"
                 echo "Found Node.js at: $nodepath"
                 break
               fi
@@ -150,17 +166,20 @@ jobs:
           # Final check
           if [ -z "$NPM_CMD" ]; then
             echo "ERROR: npm not found!"
-            echo "Please check cPanel → Setup Node.js App and ensure app is created"
-            echo "Current PATH: $PATH"
-            echo "Home directory contents:"
-            ls -la "$HOME" | grep -E "node|nvm"
+            echo "Searched locations:"
+            echo "  - $HOME/nodevenv"
+            echo "  - /opt/cpanel/ea-nodejs*/bin"
+            echo "  - System PATH"
+            echo ""
+            echo "Available nodevenv directories:"
+            ls -la "$HOME/nodevenv" 2>/dev/null || echo "None found"
             exit 1
           fi
 
-          echo "Using npm: $NPM_CMD"
-          echo "Using node: $NODE_CMD"
-          $NODE_CMD --version
-          $NPM_CMD --version
+          echo "✓ Using npm: $NPM_CMD"
+          echo "✓ Using node: $NODE_CMD"
+          echo "✓ Node version: $($NODE_CMD --version)"
+          echo "✓ NPM version: $($NPM_CMD --version)"
 
           # Set permissions
           find "$DOMAIN_PATH" -type d -exec chmod 755 {} \; 2>/dev/null || true
