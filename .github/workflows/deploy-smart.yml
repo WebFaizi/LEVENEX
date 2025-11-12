@@ -1,172 +1,113 @@
-name: Smart Deploy to Multiple Domains
-
+name: Build & Deploy to cPanel (Multiple Domains)
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     strategy:
       matrix:
         domain:
           - digitalstandeeonrent.in
           - rentalnearme.in
+        include:
+          - domain: digitalstandeeonrent.in
+            frontend_port: 3000
+            backend_port: 5000
+          - domain: rentalnearme.in
+            frontend_port: 3001
+            backend_port: 5001
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    # ──────────────────────
+    # 1. BUILD LOCALLY (Fast & Reliable)
+    # ──────────────────────
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
-        fetch-depth: 1
-        timeout: 600
-    
-    - name: Debug connection info
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build Next.js app
+      run: npm run build
+      env:
+        NEXT_PUBLIC_BASE_URL: https://${{ matrix.domain }}
+
+    # ──────────────────────
+    # 2. PREPARE PRODUCTION FILES
+    # ──────────────────────
+    - name: Create production package
       run: |
-        echo "Attempting to connect to host for domain: ${{ matrix.domain }}"
-        echo "Using port: 22"
-      
-    - name: Check if domain exists and deploy
+        mkdir -p deploy-package
+        cp -r .next deploy-package/
+        cp -r public deploy-package/public || true
+        cp package.json deploy-package/
+        cp package-lock.json deploy-package/ || true
+        mkdir -p deploy-package/LAPTOPRENTALFRONTEND && cp -r .next deploy-package/LAPTOPRENTALFRONTEND/ || true
+        mkdir -p deploy-package/LAPTOPRENTALBACKEND && cp -r ../LAPTOPRENTALBACKEND/* deploy-package/LAPTOPRENTALBACKEND/ || true
+
+    # ──────────────────────
+    # 3. UPLOAD VIA SFTP (Fast & Reliable)
+    # ──────────────────────
+    - name: Deploy to cPanel via SFTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.CPANEL_HOST }}
+        username: ${{ secrets.CPANEL_USERNAME }}
+        password: ${{ secrets.CPANEL_PASSWORD }}
+        port: 21
+        protocol: ftps
+        local-dir: ./deploy-package/
+        server-dir: /public_html/${{ matrix.domain }}/
+        dangerous-clean-slate: true   # removes old files (optional)
+        exclude: |
+          **/.git**
+          **/node_modules/**
+          **/*.log
+          **/*.pid
+
+    # ──────────────────────
+    # 4. RESTART NODE APP ON SERVER (via SSH)
+    # ──────────────────────
+    - name: Restart Node.js apps via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.CPANEL_HOST }}
         username: ${{ secrets.CPANEL_USERNAME }}
         password: ${{ secrets.CPANEL_PASSWORD }}
         port: 22
-        timeout: 300s
-        command_timeout: 15m
         script: |
-          set -e
           DOMAIN="${{ matrix.domain }}"
           DOMAIN_PATH="$HOME/public_html/$DOMAIN"
-          
-          echo "=== Deployment Information ==="
-          echo "Domain: $DOMAIN"
-          echo "Target path: $DOMAIN_PATH"
-          echo "Current user: $(whoami)"
-          echo "Home directory: $HOME"
-          echo "=============================="
-          
-          # Check if domain directory exists
-          if [ -d "$DOMAIN_PATH" ]; then
-            echo "Domain $DOMAIN exists, updating code..."
-            cd "$DOMAIN_PATH"
-            
-            # Check if git repo exists
-            if [ -d ".git" ]; then
-              echo "Git repository found, pulling latest changes..."
-              git config --global --add safe.directory "$DOMAIN_PATH"
-              git fetch origin
-              git reset --hard origin/main
-              git pull origin main
-            else
-              echo "No git repository found, cloning fresh..."
-              cd "$HOME/public_html"
-              rm -rf "$DOMAIN"
-              mkdir -p "$DOMAIN"
-              cd "$DOMAIN"
-              git clone ${{ secrets.REPO_URL }} .
-            fi
-          else
-            echo "Domain $DOMAIN not found, creating directory and cloning..."
-            mkdir -p "$DOMAIN_PATH"
-            cd "$DOMAIN_PATH"
-            git clone ${{ secrets.REPO_URL }} .
-          fi
-          
-          # Set proper permissions
-          echo "Setting permissions..."
-          find "$DOMAIN_PATH" -type d -exec chmod 755 {} \; 2>/dev/null || true
-          find "$DOMAIN_PATH" -type f -exec chmod 644 {} \; 2>/dev/null || true
-          
-          echo "Deployment completed successfully for $DOMAIN"
-          echo "Directory contents:"
-          ls -la "$DOMAIN_PATH" | head -20
-          
-          # Navigate to project directory
           cd "$DOMAIN_PATH"
-          
-          # Check if this is a monorepo with frontend and backend
-          if [ -d "LAPTOPRENTALFRONTEND" ] && [ -d "LAPTOPRENTALBACKEND" ]; then
-            echo "=== Detected Frontend and Backend structure ==="
-            
-            # Get port based on domain
-            if [ "$DOMAIN" = "digitalstandeeonrent.in" ]; then
-              FRONTEND_PORT=3000
-              BACKEND_PORT=5000
-            elif [ "$DOMAIN" = "rentalnearme.in" ]; then
-              FRONTEND_PORT=3001
-              BACKEND_PORT=5001
-            else
-              FRONTEND_PORT=3002
-              BACKEND_PORT=5002
-            fi
-            
-            # Deploy Backend
-            echo "=== Setting up Backend on port $BACKEND_PORT ==="
-            cd "$DOMAIN_PATH/LAPTOPRENTALBACKEND"
-            echo "Installing backend dependencies..."
-            npm install --production || npm install
-            
-            # Kill existing backend process if running
-            pkill -f "node.*${DOMAIN}-backend" || true
-            
-            echo "Starting backend application..."
-            PORT=$BACKEND_PORT nohup npm start > backend.log 2>&1 &
+
+          # Kill old processes
+          pkill -f "node.*${DOMAIN}" || true
+
+          # Start backend (if exists)
+          if [ -d "LAPTOPRENTALBACKEND" ]; then
+            cd LAPTOPRENTALBACKEND
+            PORT=${{ matrix.backend_port }} nohup npm start > backend.log 2>&1 &
             echo $! > backend.pid
-            echo "Backend started with PID: $(cat backend.pid)"
-            
-            # Deploy Frontend
-            echo "=== Setting up Frontend on port $FRONTEND_PORT ==="
-            cd "$DOMAIN_PATH/LAPTOPRENTALFRONTEND"
-            echo "Installing frontend dependencies..."
-            npm install --production || npm install
-            
-            echo "Building Next.js application..."
-            npm run build
-            
-            # Kill existing frontend process if running
-            pkill -f "node.*${DOMAIN}-frontend" || true
-            
-            echo "Starting frontend application..."
-            PORT=$FRONTEND_PORT nohup npm start > frontend.log 2>&1 &
-            echo $! > frontend.pid
-            echo "Frontend started with PID: $(cat frontend.pid)"
-            
-            echo "=== Deployment Summary ==="
-            echo "Frontend running on port: $FRONTEND_PORT (PID: $(cat frontend.pid))"
-            echo "Backend running on port: $BACKEND_PORT (PID: $(cat backend.pid))"
-            echo "Check logs: frontend.log and backend.log"
-            
-          else
-            echo "=== Single application deployment ==="
-            # Install dependencies
-            echo "Installing dependencies..."
-            npm install --production || npm install
-            
-            # Build the Next.js application
-            echo "Building Next.js application..."
-            npm run build
-            
-            # Get port based on domain
-            if [ "$DOMAIN" = "digitalstandeeonrent.in" ]; then
-              PORT=3000
-            elif [ "$DOMAIN" = "rentalnearme.in" ]; then
-              PORT=3001
-            else
-              PORT=3002
-            fi
-            
-            # Kill existing process if running
-            pkill -f "node.*${DOMAIN}" || true
-            
-            # Start or restart the application
-            echo "Starting application on port $PORT..."
-            PORT=$PORT nohup npm start > app.log 2>&1 &
-            echo $! > app.pid
-            
-            echo "Application $DOMAIN is now running on port $PORT"
-            echo "PID: $(cat app.pid)"
+            cd ..
           fi
+
+          # Start frontend
+          if [ -d "LAPTOPRENTALFRONTEND" ]; then
+            cd LAPTOPRENTALFRONTEND
+          fi
+
+          PORT=${{ matrix.frontend_port }} nohup npm start > app.log 2>&1 &
+          echo $! > app.pid
+
+          echo "Deployed & restarted ${{ matrix.domain }} on port ${{ matrix.frontend_port }}"
