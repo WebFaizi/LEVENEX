@@ -95,60 +95,49 @@ jobs:
 
           # === AUTO DETECT NODE.JS PATH (Works on 99% of cPanel servers) ===
           echo "Searching for Node.js installation..."
+          echo "Debug: Current domain is $DOMAIN"
           
-          # Method 1: cPanel Node.js App (most common)
+          # Method 1: cPanel Node.js App - Deep search
           if [ -d "$HOME/nodevenv" ]; then
             echo "Found cPanel Node.js environment at: $HOME/nodevenv"
+            echo "Listing nodevenv structure:"
+            ls -la "$HOME/nodevenv/" 2>/dev/null || true
             
-            # First, try to find activate script in domain-specific or public_html directories
-            for search_path in \
-              "$HOME/nodevenv/$DOMAIN" \
-              "$HOME/nodevenv/public_html/$DOMAIN" \
-              "$HOME/nodevenv/public_html" \
-              "$HOME/nodevenv"/*
-            do
-              if [ -d "$search_path" ]; then
-                echo "Checking: $search_path"
-                # Look for bin/activate in nested structure
-                for venv_dir in "$search_path"/*/bin "$search_path"/bin; do
-                  if [ -f "$venv_dir/activate" ]; then
-                    echo "Found activate script at: $venv_dir"
-                    source "$venv_dir/activate"
-                    NPM_CMD="npm"
-                    NODE_CMD="node"
-                    break 2
-                  fi
-                done
-                
-                # Look for direct node binary
-                for venv_dir in "$search_path"/*/bin "$search_path"/bin; do
-                  if [ -f "$venv_dir/node" ]; then
-                    NPM_CMD="$venv_dir/npm"
-                    NODE_CMD="$venv_dir/node"
-                    export PATH="$venv_dir:$PATH"
-                    echo "Using Node.js directly from: $venv_dir"
-                    break 2
-                  fi
-                done
+            # Search for node binary in all nested directories
+            echo "Searching for node binaries recursively..."
+            NODE_BINARY=$(find "$HOME/nodevenv" -type f -name "node" -executable 2>/dev/null | head -1)
+            
+            if [ -n "$NODE_BINARY" ]; then
+              NODE_DIR=$(dirname "$NODE_BINARY")
+              echo "Found node binary at: $NODE_BINARY"
+              echo "Node directory: $NODE_DIR"
+              
+              # Check if npm exists in the same directory
+              if [ -f "$NODE_DIR/npm" ]; then
+                NPM_CMD="$NODE_DIR/npm"
+                NODE_CMD="$NODE_BINARY"
+                export PATH="$NODE_DIR:$PATH"
+                echo "✓ Using Node.js from: $NODE_DIR"
+              else
+                echo "Warning: npm not found in $NODE_DIR, searching for npm..."
+                NPM_BINARY=$(find "$HOME/nodevenv" -type f -name "npm" 2>/dev/null | head -1)
+                if [ -n "$NPM_BINARY" ]; then
+                  NPM_CMD="$NPM_BINARY"
+                  NODE_CMD="$NODE_BINARY"
+                  export PATH="$NODE_DIR:$PATH"
+                  echo "✓ Using npm from: $(dirname $NPM_BINARY)"
+                fi
               fi
-            done
-          fi
-          
-          # Method 2: Try CloudLinux selector (alternative cPanel setup)
-          if [ -z "$NPM_CMD" ] && [ -d "$HOME/nodevenv/$DOMAIN" ]; then
-            # CloudLinux stores it differently
-            CLOUDLINUX_NODE=$(find "$HOME/nodevenv/$DOMAIN" -name "node" -type f 2>/dev/null | head -1)
-            if [ -n "$CLOUDLINUX_NODE" ]; then
-              NODE_DIR=$(dirname "$CLOUDLINUX_NODE")
-              NPM_CMD="$NODE_DIR/npm"
-              NODE_CMD="$CLOUDLINUX_NODE"
-              export PATH="$NODE_DIR:$PATH"
-              echo "Found Node.js via CloudLinux at: $NODE_DIR"
+            else
+              echo "No node binary found in nodevenv directory"
+              echo "Complete nodevenv structure:"
+              find "$HOME/nodevenv" -maxdepth 3 -type f 2>/dev/null | head -20
             fi
           fi
           
-          # Method 3: Check common cPanel paths
+          # Method 2: Check common cPanel paths
           if [ -z "$NPM_CMD" ]; then
+            echo "Trying common cPanel paths..."
             for nodepath in \
               /opt/cpanel/ea-nodejs20/bin \
               /opt/cpanel/ea-nodejs18/bin \
@@ -166,7 +155,7 @@ jobs:
             done
           fi
           
-          # Method 4: Use NVM if available
+          # Method 3: Use NVM if available
           if [ -z "$NPM_CMD" ] && [ -f "$HOME/.nvm/nvm.sh" ]; then
             echo "Loading NVM..."
             export NVM_DIR="$HOME/.nvm"
@@ -176,7 +165,7 @@ jobs:
             NODE_CMD="node"
           fi
           
-          # Method 5: Use system PATH
+          # Method 4: Use system PATH
           if [ -z "$NPM_CMD" ]; then
             if command -v npm >/dev/null 2>&1; then
               NPM_CMD="npm"
@@ -187,27 +176,36 @@ jobs:
           
           # Final check
           if [ -z "$NPM_CMD" ]; then
+            echo ""
+            echo "=========================================="
             echo "ERROR: npm not found!"
+            echo "=========================================="
+            echo "Troubleshooting information:"
             echo ""
-            echo "Debug information:"
-            echo "Domain: $DOMAIN"
-            echo "Searched locations:"
-            echo "  - $HOME/nodevenv/$DOMAIN"
-            echo "  - $HOME/nodevenv/public_html/$DOMAIN"
-            echo "  - /opt/cpanel/ea-nodejs*/bin"
-            echo "  - System PATH"
+            echo "1. Check cPanel Setup Node.js App"
+            echo "   - Go to cPanel → Software → Setup Node.js App"
+            echo "   - Ensure Node.js app is created for: $DOMAIN"
+            echo "   - Application root: $DOMAIN_PATH"
             echo ""
-            echo "nodevenv structure:"
-            find "$HOME/nodevenv" -type f -name "node" 2>/dev/null || echo "No node binaries found"
+            echo "2. nodevenv structure found:"
+            find "$HOME/nodevenv" -maxdepth 4 2>/dev/null | head -30
             echo ""
-            echo "Please ensure Node.js app is set up in cPanel for domain: $DOMAIN"
+            echo "3. If you see your domain above but no 'bin' folder,"
+            echo "   you need to create the Node.js app in cPanel first."
+            echo ""
             exit 1
           fi
 
-          echo "✓ Using npm: $NPM_CMD"
-          echo "✓ Using node: $NODE_CMD"
-          echo "✓ Node version: $($NODE_CMD --version)"
-          echo "✓ NPM version: $($NPM_CMD --version)"
+          echo ""
+          echo "=========================================="
+          echo "✓ Node.js Configuration"
+          echo "=========================================="
+          echo "NPM Path: $NPM_CMD"
+          echo "Node Path: $NODE_CMD"
+          echo "Node Version: $($NODE_CMD --version)"
+          echo "NPM Version: $($NPM_CMD --version)"
+          echo "=========================================="
+          echo ""
 
           # Set permissions
           find "$DOMAIN_PATH" -type d -exec chmod 755 {} \; 2>/dev/null || true
