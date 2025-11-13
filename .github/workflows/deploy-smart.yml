@@ -62,7 +62,7 @@ jobs:
           cp LAPTOPRENTALFRONTEND/package.json deploy-package/LAPTOPRENTALFRONTEND/
           cp LAPTOPRENTALFRONTEND/package-lock.json deploy-package/LAPTOPRENTALFRONTEND/ || true
           cp LAPTOPRENTALFRONTEND/next.config.js deploy-package/LAPTOPRENTALFRONTEND/ || true
-          cp LAPTOPRENTALFRONTEND/.env* deploy-package/LAPTOPRENTALFRONTEND/ || true
+          cp LAPTOPRENTALFRONTEND/.env.local* deploy-package/LAPTOPRENTALFRONTEND/ || true
 
           # Backend: preserve folder
           mkdir -p deploy-package/LAPTOPRENTALBACKEND
