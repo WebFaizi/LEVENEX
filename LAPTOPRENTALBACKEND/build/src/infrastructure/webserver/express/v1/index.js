@@ -106,7 +106,7 @@ const createServer = () => {
         }
     });
     app.get("/", (req, res) => {
-        res.send(`<h1 style="color: green;">Server Running CICD CHECK2</h1>`);
+        res.send(`<h1 style="color: green;">Server Running CICD CHECK4</h1>`);
     });
     // Apply IP ban checking middleware globally to all API routes
     app.use("/api", ipBan_middleware_1.checkIpBannedFrontend);

@@ -120,7 +120,7 @@ export const createServer = (): void => {
     });
 
     app.get("/",(req,res) => {
-        res.send(`<h1 style="color: green;">Server Running</h1>`)
+        res.send(`<h1 style="color: green;">Server Running CICD CHECK4</h1>`)
     })
     
     // Apply IP ban checking middleware globally to all API routes
