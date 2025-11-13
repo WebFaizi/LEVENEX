@@ -84,53 +84,53 @@ jobs:
           strip_components: 1
           overwrite: true
 
-      # # Fix permissions & restart apps
-      # - name: Fix permissions & restart Node.js apps
-      #   uses: appleboy/ssh-action@v1.0.3
-      #   with:
-      #     host: ${{ secrets.CPANEL_HOST }}
-      #     username: ${{ secrets.CPANEL_USERNAME }}
-      #     password: ${{ secrets.CPANEL_PASSWORD }}
-      #     port: 22
-      #     script: |
-      #       DOMAIN="${{ matrix.domain }}"
-      #       DOMAIN_PATH="$HOME/public_html/$DOMAIN"
-      #       cd "$DOMAIN_PATH"
+      # Fix permissions & restart apps
+      - name: Fix permissions & restart Node.js apps
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.CPANEL_HOST }}
+          username: ${{ secrets.CPANEL_USERNAME }}
+          password: ${{ secrets.CPANEL_PASSWORD }}
+          port: 22
+          script: |
+            DOMAIN="${{ matrix.domain }}"
+            DOMAIN_PATH="$HOME/public_html/$DOMAIN"
+            cd "$DOMAIN_PATH"
 
-      #       echo "Deploying to: $DOMAIN_PATH"
+            echo "Deploying to: $DOMAIN_PATH"
 
-      #       # Set proper permissions
-      #       find . -type d -exec chmod 755 {} \;
-      #       find . -type f -exec chmod 644 {} \;
-      #       chmod 755 LAPTOPRENTALFRONTEND/.next/cache || true
+            # Set proper permissions
+            find . -type d -exec chmod 755 {} \;
+            find . -type f -exec chmod 644 {} \;
+            chmod 755 LAPTOPRENTALFRONTEND/.next/cache || true
 
-      #       # Kill old processes using domain name
-      #       pkill -f "node.*$DOMAIN" || true
-      #       sleep 2
+            # Kill old processes using domain name
+            pkill -f "node.*$DOMAIN" || true
+            sleep 2
 
-      #       # Start Backend
-      #       if [ -d "LAPTOPRENTALBACKEND" ] && [ -f "LAPTOPRENTALBACKEND/package.json" ]; then
-      #         cd LAPTOPRENTALBACKEND
-      #         echo "Starting backend on port ${{ matrix.backend_port }}..."
-      #         npm install --production --silent
-      #         PORT=${{ matrix.backend_port }} nohup npm start > "$DOMAIN_PATH/backend.log" 2>&1 &
-      #         echo $! > "$DOMAIN_PATH/backend.pid"
-      #         cd "$DOMAIN_PATH"
-      #       else
-      #         echo "No backend found, skipping."
-      #       fi
+            # Start Backend
+            if [ -d "LAPTOPRENTALBACKEND" ] && [ -f "LAPTOPRENTALBACKEND/package.json" ]; then
+              cd LAPTOPRENTALBACKEND
+              echo "Starting backend on port ${{ matrix.backend_port }}..."
+              npm install --production --silent
+              # PORT=${{ matrix.backend_port }} nohup npm start > "$DOMAIN_PATH/backend.log" 2>&1 &
+              # echo $! > "$DOMAIN_PATH/backend.pid"
+              cd "$DOMAIN_PATH"
+            else
+              echo "No backend found, skipping."
+            fi
 
-      #       # Start Frontend (must run from inside LAPTOPRENTALFRONTEND)
-      #       if [ -d "LAPTOPRENTALFRONTEND" ] && [ -f "LAPTOPRENTALFRONTEND/package.json" ]; then
-      #         cd LAPTOPRENTALFRONTEND
-      #         echo "Starting frontend on port ${{ matrix.frontend_port }}..."
-      #         npm install --production --silent
-      #         PORT=${{ matrix.frontend_port }} nohup npm start > "$DOMAIN_PATH/app.log" 2>&1 &
-      #         echo $! > "$DOMAIN_PATH/app.pid"
-      #         cd "$DOMAIN_PATH"
-      #       else
-      #         echo "No frontend found!"
-      #       fi
+            # Start Frontend (must run from inside LAPTOPRENTALFRONTEND)
+            if [ -d "LAPTOPRENTALFRONTEND" ] && [ -f "LAPTOPRENTALFRONTEND/package.json" ]; then
+              cd LAPTOPRENTALFRONTEND
+              echo "Starting frontend on port ${{ matrix.frontend_port }}..."
+              npm install --production --silent
+              # PORT=${{ matrix.frontend_port }} nohup npm start > "$DOMAIN_PATH/app.log" 2>&1 &
+              # echo $! > "$DOMAIN_PATH/app.pid"
+              cd "$DOMAIN_PATH"
+            else
+              echo "No frontend found!"
+            fi
 
       #       # Final status
       #       echo "Deployed successfully: https://$DOMAIN"
