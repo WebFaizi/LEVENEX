@@ -156,7 +156,7 @@ const categorySearchCountListModel = (search, page, limit) => __awaiter(void 0, 
 });
 exports.categorySearchCountListModel = categorySearchCountListModel;
 const categoriesTopListing = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
+    var _a;
     try {
         const pipeline = [
             {
@@ -216,7 +216,7 @@ const categoriesTopListing = () => __awaiter(void 0, void 0, void 0, function* (
             categorySearch_schema_1.default.aggregate(pipeline),
             categorySearch_schema_1.default.aggregate(countPipeline),
         ]);
-        const totalCategories = ((_b = countResult[0]) === null || _b === void 0 ? void 0 : _b.total) || 0;
+        const totalCategories = ((_a = countResult[0]) === null || _a === void 0 ? void 0 : _a.total) || 0;
         return {
             data: results,
             totalCategories,

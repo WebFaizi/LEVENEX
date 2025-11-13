@@ -528,7 +528,7 @@ const frontendSettingModel = (...args_1) => __awaiter(void 0, [...args_1], void 
     }
 });
 exports.frontendSettingModel = frontendSettingModel;
-const frontendFooterModel = (...args_2) => __awaiter(void 0, [...args_2], void 0, function* (current_city_id = null, category_id = null) {
+const frontendFooterModel = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (current_city_id = null, category_id = null) {
     try {
         const mumbai_data_name = yield city_schema_1.default
             .findOne({
@@ -608,7 +608,7 @@ const frontendFooterModel = (...args_2) => __awaiter(void 0, [...args_2], void 0
     }
 });
 exports.frontendFooterModel = frontendFooterModel;
-const frontendAdsModel = (...args_3) => __awaiter(void 0, [...args_3], void 0, function* (current_city_id = null, category_id = null) {
+const frontendAdsModel = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (current_city_id = null, category_id = null) {
     try {
         if (!current_city_id) {
             const current_location_data = yield city_schema_2.default.findOne({

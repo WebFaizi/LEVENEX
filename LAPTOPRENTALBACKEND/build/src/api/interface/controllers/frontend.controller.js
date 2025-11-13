@@ -435,7 +435,7 @@ const getListingDetails_data = (req, res) => __awaiter(void 0, void 0, void 0, f
 });
 exports.getListingDetails_data = getListingDetails_data;
 const getListingDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c, _d, _e, _f, _g, _h, _j, _k, _l;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     try {
         const { url_slug, location_query } = req.query;
         const cacheKey = `listingDetails:${url_slug}:${location_query}`;
@@ -556,16 +556,16 @@ const getListingDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 let locationPromise = Promise.resolve("");
                 if (listing_details.is_area_all_selected &&
                     listing_details.is_city_all_selected) {
-                    locationPromise = getCitiesFromState((_c = listing_details.state_id) === null || _c === void 0 ? void 0 : _c.unique_id).then((cities) => String((cities === null || cities === void 0 ? void 0 : cities[0]) || ""));
+                    locationPromise = getCitiesFromState((_a = listing_details.state_id) === null || _a === void 0 ? void 0 : _a.unique_id).then((cities) => String((cities === null || cities === void 0 ? void 0 : cities[0]) || ""));
                 }
                 else if (listing_details.is_area_all_selected) {
-                    locationPromise = getAreaFromCity((_d = listing_details.city_id[0]) === null || _d === void 0 ? void 0 : _d.unique_id).then((areas) => { var _a; return String((areas === null || areas === void 0 ? void 0 : areas[0]) || ((_a = listing_details === null || listing_details === void 0 ? void 0 : listing_details.area_id) === null || _a === void 0 ? void 0 : _a._id) || ""); });
+                    locationPromise = getAreaFromCity((_b = listing_details.city_id[0]) === null || _b === void 0 ? void 0 : _b.unique_id).then((areas) => { var _a; return String((areas === null || areas === void 0 ? void 0 : areas[0]) || ((_a = listing_details === null || listing_details === void 0 ? void 0 : listing_details.area_id) === null || _a === void 0 ? void 0 : _a._id) || ""); });
                 }
                 else if (!listing_details.is_area_all_selected) {
                     locationPromise = Promise.resolve(String(listing_details.area_id._id || ""));
                 }
                 else if (!listing_details.is_city_all_selected) {
-                    locationPromise = Promise.resolve(String(((_f = (_e = listing_details.city_id) === null || _e === void 0 ? void 0 : _e[0]) === null || _f === void 0 ? void 0 : _f._id) || ""));
+                    locationPromise = Promise.resolve(String(((_d = (_c = listing_details.city_id) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d._id) || ""));
                 }
                 // Fetch review + location in parallel
                 const [location_id] = yield Promise.all([locationPromise]);
@@ -593,16 +593,16 @@ const getListingDetails = (req, res) => __awaiter(void 0, void 0, void 0, functi
                 let locationPromise = Promise.resolve("");
                 if (listing_details.is_area_all_selected &&
                     listing_details.is_city_all_selected) {
-                    locationPromise = getCitiesFromState((_g = listing_details.state_id) === null || _g === void 0 ? void 0 : _g.unique_id).then((cities) => String((cities === null || cities === void 0 ? void 0 : cities[0]) || ""));
+                    locationPromise = getCitiesFromState((_e = listing_details.state_id) === null || _e === void 0 ? void 0 : _e.unique_id).then((cities) => String((cities === null || cities === void 0 ? void 0 : cities[0]) || ""));
                 }
                 else if (listing_details.is_area_all_selected) {
-                    locationPromise = getAreaFromCity((_h = listing_details.city_id[0]) === null || _h === void 0 ? void 0 : _h.unique_id).then((areas) => String((areas === null || areas === void 0 ? void 0 : areas[0]) || listing_details.area_id));
+                    locationPromise = getAreaFromCity((_f = listing_details.city_id[0]) === null || _f === void 0 ? void 0 : _f.unique_id).then((areas) => String((areas === null || areas === void 0 ? void 0 : areas[0]) || listing_details.area_id));
                 }
                 else if (!listing_details.is_area_all_selected) {
-                    locationPromise = Promise.resolve(String(((_j = listing_details === null || listing_details === void 0 ? void 0 : listing_details.area_id) === null || _j === void 0 ? void 0 : _j._id) || ""));
+                    locationPromise = Promise.resolve(String(((_g = listing_details === null || listing_details === void 0 ? void 0 : listing_details.area_id) === null || _g === void 0 ? void 0 : _g._id) || ""));
                 }
                 else if (!listing_details.is_city_all_selected) {
-                    locationPromise = Promise.resolve(String(((_l = (_k = listing_details === null || listing_details === void 0 ? void 0 : listing_details.city_id) === null || _k === void 0 ? void 0 : _k[0]) === null || _l === void 0 ? void 0 : _l._id) || ""));
+                    locationPromise = Promise.resolve(String(((_j = (_h = listing_details === null || listing_details === void 0 ? void 0 : listing_details.city_id) === null || _h === void 0 ? void 0 : _h[0]) === null || _j === void 0 ? void 0 : _j._id) || ""));
                 }
                 // Fetch review + location in parallel
                 const [listing_review_list, location_id] = yield Promise.all([

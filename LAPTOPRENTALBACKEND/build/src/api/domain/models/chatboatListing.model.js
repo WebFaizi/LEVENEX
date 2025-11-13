@@ -147,7 +147,7 @@ const chatboatListingDetails = (chatboat_id, callback) => __awaiter(void 0, void
 });
 exports.chatboatListingDetails = chatboatListingDetails;
 const chatboatListingModel = (search, page, limit) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e, _f, _g, _h, _j;
+    var _a, _b, _c, _d, _e;
     try {
         const skip = (page - 1) * limit;
         const pipeline = [
@@ -258,9 +258,9 @@ const chatboatListingModel = (search, page, limit) => __awaiter(void 0, void 0, 
         ];
         const result = yield chatboat_schema_1.default.aggregate(pipeline);
         return {
-            data: (_e = result[0]) === null || _e === void 0 ? void 0 : _e.data,
-            totalUsers: ((_g = (_f = result[0]) === null || _f === void 0 ? void 0 : _f.totalCount[0]) === null || _g === void 0 ? void 0 : _g.count) || 0,
-            totalPages: Math.ceil(((_j = (_h = result[0]) === null || _h === void 0 ? void 0 : _h.totalCount[0]) === null || _j === void 0 ? void 0 : _j.count) / limit) || 0,
+            data: (_a = result[0]) === null || _a === void 0 ? void 0 : _a.data,
+            totalUsers: ((_c = (_b = result[0]) === null || _b === void 0 ? void 0 : _b.totalCount[0]) === null || _c === void 0 ? void 0 : _c.count) || 0,
+            totalPages: Math.ceil(((_e = (_d = result[0]) === null || _d === void 0 ? void 0 : _d.totalCount[0]) === null || _e === void 0 ? void 0 : _e.count) / limit) || 0,
             currentPage: page
         };
     }

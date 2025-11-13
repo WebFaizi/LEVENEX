@@ -12,7 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBasicGeoLocationFromIp = exports.getGeoLocationFromIp = void 0;
+exports.getGeoLocationFromIp = getGeoLocationFromIp;
+exports.getBasicGeoLocationFromIp = getBasicGeoLocationFromIp;
 const geoip_lite_1 = __importDefault(require("geoip-lite"));
 const country_list_1 = require("country-list");
 const node_geocoder_1 = __importDefault(require("node-geocoder"));
@@ -115,7 +116,6 @@ function getGeoLocationFromIp(ip) {
         }
     });
 }
-exports.getGeoLocationFromIp = getGeoLocationFromIp;
 /**
  * Get geographical information synchronously from IP (without zipcode lookup)
  * Use this when you need faster response and don't need precise zipcode
@@ -172,5 +172,4 @@ function getBasicGeoLocationFromIp(ip) {
         };
     }
 }
-exports.getBasicGeoLocationFromIp = getBasicGeoLocationFromIp;
 //# sourceMappingURL=geolocation.js.map

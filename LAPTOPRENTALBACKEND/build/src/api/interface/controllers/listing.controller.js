@@ -15,13 +15,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1179,8 +1189,8 @@ const exportListing = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         ]);
         // Format data
         const listingsData = yield Promise.all(listings.map((listing) => __awaiter(void 0, void 0, void 0, function* () {
-            var _k, _l, _m, _o, _p, _q, _r, _s, _t;
-            let categoryNames = ((_k = listing === null || listing === void 0 ? void 0 : listing.category_ids) === null || _k === void 0 ? void 0 : _k.map((cat) => cat.name)) || [];
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+            let categoryNames = ((_a = listing === null || listing === void 0 ? void 0 : listing.category_ids) === null || _a === void 0 ? void 0 : _a.map((cat) => cat.name)) || [];
             const reviewPromise = (0, listing_model_1.ListingWiseReviewList)(listing._id, 1, 10);
             const listing_review_list = yield Promise.all([reviewPromise]);
             let isFeatured = false;
@@ -1213,10 +1223,10 @@ const exportListing = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 "Phone Number Two": (listing === null || listing === void 0 ? void 0 : listing.second_phone_no) || "N/A",
                 City: Array.isArray(listing === null || listing === void 0 ? void 0 : listing.city_id)
                     ? listing.city_id.map((c) => c.name).join(", ")
-                    : ((_l = listing.city_id) === null || _l === void 0 ? void 0 : _l.name) || "All",
-                Country: (_o = (_m = listing.country_id) === null || _m === void 0 ? void 0 : _m.name) !== null && _o !== void 0 ? _o : "N/A",
-                State: (_q = (_p = listing.state_id) === null || _p === void 0 ? void 0 : _p.name) !== null && _q !== void 0 ? _q : "N/A",
-                Area: (_s = (_r = listing.area_id) === null || _r === void 0 ? void 0 : _r.name) !== null && _s !== void 0 ? _s : "N/A",
+                    : ((_b = listing.city_id) === null || _b === void 0 ? void 0 : _b.name) || "All",
+                Country: (_d = (_c = listing.country_id) === null || _c === void 0 ? void 0 : _c.name) !== null && _d !== void 0 ? _d : "N/A",
+                State: (_f = (_e = listing.state_id) === null || _e === void 0 ? void 0 : _e.name) !== null && _f !== void 0 ? _f : "N/A",
+                Area: (_h = (_g = listing.area_id) === null || _g === void 0 ? void 0 : _g.name) !== null && _h !== void 0 ? _h : "N/A",
                 Address: (listing === null || listing === void 0 ? void 0 : listing.address) || "N/A",
                 Pincode: (listing === null || listing === void 0 ? void 0 : listing.pincode) || "N/A",
                 Latitude: (listing === null || listing === void 0 ? void 0 : listing.latitude) || "N/A",
@@ -1244,7 +1254,7 @@ const exportListing = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                     (listing === null || listing === void 0 ? void 0 : listing.mobile_cover_image) !== ""
                     ? path_1.default.basename(listing === null || listing === void 0 ? void 0 : listing.mobile_cover_image)
                     : "",
-                "Average Rating": (listing_review_list && ((_t = listing_review_list[0]) === null || _t === void 0 ? void 0 : _t.averageRating)) || 0,
+                "Average Rating": (listing_review_list && ((_j = listing_review_list[0]) === null || _j === void 0 ? void 0 : _j.averageRating)) || 0,
                 "Is Featured": isFeatured ? "Yes" : "No",
                 "Is Premium": isPremium ? "Yes" : "No"
             };

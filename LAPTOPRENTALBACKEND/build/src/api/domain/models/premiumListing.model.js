@@ -76,7 +76,7 @@ const storePremiumListingModel = (premiumListingData, callback) => __awaiter(voi
 });
 exports.storePremiumListingModel = storePremiumListingModel;
 const premiumListingList = (search, page, limit) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e;
     try {
         const skip = (page - 1) * limit;
         const users = yield premiumListing_schema_1.default.aggregate([
@@ -129,9 +129,9 @@ const premiumListingList = (search, page, limit) => __awaiter(void 0, void 0, vo
             }
         ]);
         return {
-            data: (_b = users[0]) === null || _b === void 0 ? void 0 : _b.data,
-            totalUsers: ((_d = (_c = users[0]) === null || _c === void 0 ? void 0 : _c.totalCount[0]) === null || _d === void 0 ? void 0 : _d.count) || 0,
-            totalPages: Math.ceil(((_f = (_e = users[0]) === null || _e === void 0 ? void 0 : _e.totalCount[0]) === null || _f === void 0 ? void 0 : _f.count) / limit) || 0,
+            data: (_a = users[0]) === null || _a === void 0 ? void 0 : _a.data,
+            totalUsers: ((_c = (_b = users[0]) === null || _b === void 0 ? void 0 : _b.totalCount[0]) === null || _c === void 0 ? void 0 : _c.count) || 0,
+            totalPages: Math.ceil(((_e = (_d = users[0]) === null || _d === void 0 ? void 0 : _d.totalCount[0]) === null || _e === void 0 ? void 0 : _e.count) / limit) || 0,
             currentPage: page
         };
     }
@@ -185,11 +185,11 @@ const premiumListingDetail = (listing_id, callback) => __awaiter(void 0, void 0,
 });
 exports.premiumListingDetail = premiumListingDetail;
 const updatePremiumListingModel = (premiumListingData, callback) => __awaiter(void 0, void 0, void 0, function* () {
-    var _g;
+    var _a;
     try {
         const updatedPremiumListing = yield premiumListing_schema_1.default.findOneAndUpdate({ _id: new mongoose_1.default.Types.ObjectId(premiumListingData.premium_listing_id) }, {
             premium_type: premiumListingData.premium_type,
-            city_id: ((_g = premiumListingData === null || premiumListingData === void 0 ? void 0 : premiumListingData.city_ids) === null || _g === void 0 ? void 0 : _g.map((id) => parseInt(id))) || [],
+            city_id: ((_a = premiumListingData === null || premiumListingData === void 0 ? void 0 : premiumListingData.city_ids) === null || _a === void 0 ? void 0 : _a.map((id) => parseInt(id))) || [],
             start_date: premiumListingData.start_date,
             end_date: premiumListingData.end_date
         }, { new: true, runValidators: true });

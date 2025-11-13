@@ -357,7 +357,7 @@ const importUserListingDataModel = (loginUser, listingData, callback) => __await
 });
 exports.importUserListingDataModel = importUserListingDataModel;
 const importFreshListingDataModel = (loginUser, listingData, callback) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d, _e, _f, _g, _h, _j;
+    var _a, _b, _c, _d, _e, _f;
     try {
         /* holds NEW listings we plan to insert, indexed by a unique key */
         const pendingMap = new Map();
@@ -404,9 +404,9 @@ const importFreshListingDataModel = (loginUser, listingData, callback) => __awai
                 /* 4. Check DB for existing listing ----------------------------------- */
                 const existing = yield listing_schema_1.default.findOne({
                     user_id,
-                    name: (_d = item.name) === null || _d === void 0 ? void 0 : _d.trim(),
-                    email: (_e = item.email) === null || _e === void 0 ? void 0 : _e.trim(),
-                    address: (_f = item.address) === null || _f === void 0 ? void 0 : _f.trim()
+                    name: (_a = item.name) === null || _a === void 0 ? void 0 : _a.trim(),
+                    email: (_b = item.email) === null || _b === void 0 ? void 0 : _b.trim(),
+                    address: (_c = item.address) === null || _c === void 0 ? void 0 : _c.trim()
                 }).lean();
                 if (existing) {
                     const existingCatIds = (existing.category_ids || []).map(String);
@@ -421,7 +421,7 @@ const importFreshListingDataModel = (loginUser, listingData, callback) => __awai
                     continue; // done with this row
                 }
                 /* 5. Merge duplicates **within the same Excel file** ------------------ */
-                const key = `${user_id}|${(_g = item.name) === null || _g === void 0 ? void 0 : _g.trim().toLowerCase()}|${(_h = item.email) === null || _h === void 0 ? void 0 : _h.trim().toLowerCase()}|${(_j = item.address) === null || _j === void 0 ? void 0 : _j.trim().toLowerCase()}`;
+                const key = `${user_id}|${(_d = item.name) === null || _d === void 0 ? void 0 : _d.trim().toLowerCase()}|${(_e = item.email) === null || _e === void 0 ? void 0 : _e.trim().toLowerCase()}|${(_f = item.address) === null || _f === void 0 ? void 0 : _f.trim().toLowerCase()}`;
                 if (pendingMap.has(key)) {
                     const entry = pendingMap.get(key);
                     categoryIds.forEach(id => entry.catIds.add(id));
@@ -930,7 +930,7 @@ const updateListingBannersList = (listingData, callback) => __awaiter(void 0, vo
 });
 exports.updateListingBannersList = updateListingBannersList;
 const ListingList = (search, page, limit) => __awaiter(void 0, void 0, void 0, function* () {
-    var _k, _l, _m, _o, _p;
+    var _a, _b, _c, _d, _e;
     try {
         const skip = (page - 1) * limit;
         const grandparentDir = path_1.default.join(__dirname, "..", "..", "..", "..", "..");
@@ -1066,7 +1066,7 @@ const ListingList = (search, page, limit) => __awaiter(void 0, void 0, void 0, f
             }
         ];
         const listings = yield listing_schema_1.default.aggregate(basePipeline);
-        const updatedListings = (_k = listings[0]) === null || _k === void 0 ? void 0 : _k.data.map((listing) => {
+        const updatedListings = (_a = listings[0]) === null || _a === void 0 ? void 0 : _a.data.map((listing) => {
             const listingImagePath = path_1.default.join(grandparentDir, listing.listing_image || "");
             const listingImageExists = listing.listing_image && fs_1.default.existsSync(listingImagePath);
             const coverImagePath = path_1.default.join(grandparentDir, listing.cover_image || "");
@@ -1075,8 +1075,8 @@ const ListingList = (search, page, limit) => __awaiter(void 0, void 0, void 0, f
         });
         return {
             data: updatedListings,
-            totalUsers: ((_m = (_l = listings[0]) === null || _l === void 0 ? void 0 : _l.totalCount[0]) === null || _m === void 0 ? void 0 : _m.count) || 0,
-            totalPages: Math.ceil(((_p = (_o = listings[0]) === null || _o === void 0 ? void 0 : _o.totalCount[0]) === null || _p === void 0 ? void 0 : _p.count) / limit),
+            totalUsers: ((_c = (_b = listings[0]) === null || _b === void 0 ? void 0 : _b.totalCount[0]) === null || _c === void 0 ? void 0 : _c.count) || 0,
+            totalPages: Math.ceil(((_e = (_d = listings[0]) === null || _d === void 0 ? void 0 : _d.totalCount[0]) === null || _e === void 0 ? void 0 : _e.count) / limit),
             currentPage: page
         };
     }
@@ -1087,7 +1087,7 @@ const ListingList = (search, page, limit) => __awaiter(void 0, void 0, void 0, f
 });
 exports.ListingList = ListingList;
 const UserListingList = (user_email, search, page, limit) => __awaiter(void 0, void 0, void 0, function* () {
-    var _q, _r, _s, _t, _u;
+    var _a, _b, _c, _d, _e;
     try {
         const skip = (page - 1) * limit;
         const users = yield listing_schema_1.default.aggregate([
@@ -1176,7 +1176,7 @@ const UserListingList = (user_email, search, page, limit) => __awaiter(void 0, v
         ]);
         const grandparentDir = path_1.default.join(__dirname, "..", "..", "..", "..", "..");
         const defaultImageUrl = `${baseUrl}/uploads/default.jpg`;
-        const updatedUsers = (_q = users[0]) === null || _q === void 0 ? void 0 : _q.data.map((user) => {
+        const updatedUsers = (_a = users[0]) === null || _a === void 0 ? void 0 : _a.data.map((user) => {
             const listingImagePath = path_1.default.join(grandparentDir, user.listing_image || "");
             const listingImageExists = user.listing_image && fs_1.default.existsSync(listingImagePath);
             const listingImagePath2 = path_1.default.join(grandparentDir, user.cover_image || "");
@@ -1185,8 +1185,8 @@ const UserListingList = (user_email, search, page, limit) => __awaiter(void 0, v
         });
         return {
             data: updatedUsers,
-            totalUsers: ((_s = (_r = users[0]) === null || _r === void 0 ? void 0 : _r.totalCount[0]) === null || _s === void 0 ? void 0 : _s.count) || 0,
-            totalPages: Math.ceil(((_u = (_t = users[0]) === null || _t === void 0 ? void 0 : _t.totalCount[0]) === null || _u === void 0 ? void 0 : _u.count) / limit) || 0,
+            totalUsers: ((_c = (_b = users[0]) === null || _b === void 0 ? void 0 : _b.totalCount[0]) === null || _c === void 0 ? void 0 : _c.count) || 0,
+            totalPages: Math.ceil(((_e = (_d = users[0]) === null || _d === void 0 ? void 0 : _d.totalCount[0]) === null || _e === void 0 ? void 0 : _e.count) / limit) || 0,
             currentPage: page
         };
     }

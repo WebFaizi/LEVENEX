@@ -129,7 +129,7 @@ const userProductListModel = (loginUser, search, page, limit) => __awaiter(void 
 });
 exports.userProductListModel = userProductListModel;
 const listingProductListModel = (search, page, limit) => __awaiter(void 0, void 0, void 0, function* () {
-    var _f, _g, _h, _j, _k;
+    var _a, _b, _c, _d, _e;
     try {
         const skip = (page - 1) * limit;
         const result = yield product_schema_1.default.aggregate([
@@ -195,7 +195,7 @@ const listingProductListModel = (search, page, limit) => __awaiter(void 0, void 
                 }
             }
         ]);
-        const updatedUsers = (_f = result[0]) === null || _f === void 0 ? void 0 : _f.data.map((user) => {
+        const updatedUsers = (_a = result[0]) === null || _a === void 0 ? void 0 : _a.data.map((user) => {
             const userObject = Object.assign({}, user);
             if (Array.isArray(user === null || user === void 0 ? void 0 : user.product_images)) {
                 const updatedImages = user.product_images.map((image) => `${baseUrl}/${image.replace(/\\/g, "/")}`);
@@ -205,8 +205,8 @@ const listingProductListModel = (search, page, limit) => __awaiter(void 0, void 
         });
         return {
             data: updatedUsers,
-            totalUsers: ((_h = (_g = result[0]) === null || _g === void 0 ? void 0 : _g.totalCount[0]) === null || _h === void 0 ? void 0 : _h.count) || 0,
-            totalPages: Math.ceil(((_k = (_j = result[0]) === null || _j === void 0 ? void 0 : _j.totalCount[0]) === null || _k === void 0 ? void 0 : _k.count) / limit) || 0,
+            totalUsers: ((_c = (_b = result[0]) === null || _b === void 0 ? void 0 : _b.totalCount[0]) === null || _c === void 0 ? void 0 : _c.count) || 0,
+            totalPages: Math.ceil(((_e = (_d = result[0]) === null || _d === void 0 ? void 0 : _d.totalCount[0]) === null || _e === void 0 ? void 0 : _e.count) / limit) || 0,
             currentPage: page
         };
     }

@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSafeClientIp = exports.isValidIp = exports.getClientIp = void 0;
+exports.getClientIp = getClientIp;
+exports.isValidIp = isValidIp;
+exports.getSafeClientIp = getSafeClientIp;
 /**
  * Extracts the real client IP address from the request
  * Handles various proxy configurations and headers
@@ -74,7 +76,6 @@ function getClientIp(req) {
     // If all else fails, return unknown
     return 'UNKNOWN';
 }
-exports.getClientIp = getClientIp;
 /**
  * Validates if a string is a valid IP address
  * @param ip - IP address to validate
@@ -93,7 +94,6 @@ function isValidIp(ip) {
     const ipv6Pattern = /^([\da-f]{1,4}:){7}[\da-f]{1,4}$/i;
     return ipv6Pattern.test(ip);
 }
-exports.isValidIp = isValidIp;
 /**
  * Gets client IP and validates it
  * Returns a sanitized IP or 'UNKNOWN' if invalid
@@ -111,5 +111,4 @@ function getSafeClientIp(req) {
     }
     return ip;
 }
-exports.getSafeClientIp = getSafeClientIp;
 //# sourceMappingURL=getClientIp.js.map
