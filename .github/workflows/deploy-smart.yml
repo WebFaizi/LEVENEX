@@ -6,12 +6,6 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      matrix: ${{ fromJson(needs.load-config.outputs.matrix) }}
-
   load-config:
     runs-on: ubuntu-latest
     outputs:
