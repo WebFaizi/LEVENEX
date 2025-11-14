@@ -10,17 +10,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
-      matrix:
-        domain:
-          - digitalstandeeonrent.in
-          - rentalnearme.in
-        include:
-          - domain: digitalstandeeonrent.in
-            frontend_port: 3000
-            backend_port: 5000
-          - domain: rentalnearme.in
-            frontend_port: 3001
-            backend_port: 5001
+      matrix: ${{ fromJson(needs.load-config.outputs.matrix) }}
+
+  load-config:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Load domain configuration
+        id: set-matrix
+        run: |
+          CONFIG=$(cat .github/workflows/domains-config.json)
+          DOMAINS=$(echo $CONFIG | jq -c '.domains')
+          echo "matrix={\"include\":$DOMAINS}" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: load-config
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix: ${{ fromJson(needs.load-config.outputs.matrix) }}
 
     steps:
       - name: Checkout code

@@ -1,0 +1,14 @@
+{
+  "domains": [
+    {
+      "domain": "digitalstandeeonrent.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalnearme.in",
+      "frontend_port": 3001,
+      "backend_port": 5001
+    }
+  ]
+}

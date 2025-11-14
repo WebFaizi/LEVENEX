@@ -4,11 +4,15 @@ export async function getRequest(path) {
   // Remove leading slash from path to prevent double slashes
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   
-  // Use appropriate caching for static generation
+  // Real-time data fetching with no cache
   return fetch(`${baseURL}/${cleanPath}`, {
-    // Remove cache-busting headers for build time
-    // Use revalidate instead
-    next: { revalidate: 3600 } // Cache for 1 hour
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    },
+    // Force fresh data on every request
+    next: { revalidate: 60 }
   })
     .then((response) => {
       if (response.ok) {
