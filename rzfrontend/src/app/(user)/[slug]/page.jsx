@@ -33,13 +33,24 @@ export async function generateMetadata({ params }) {
 }
 
 export async function generateStaticParams() {
-  const res = await getRequest(`/get-all-listing-slug`);
-  const data = res.data;
-  const { listing, jobs, products } = data;
+  try {
+    const res = await getRequest(`/get-all-listing-slug`);
+    
+    if (!res || !res.data) {
+      console.warn('No data returned from get-all-listing-slug');
+      return [];
+    }
+    
+    const data = res.data;
+    const { listing = [], jobs = [], products = [] } = data;
 
-  return [...listing, ...jobs, ...products].map((item) => ({
-    slug: item.slug,
-  }));
+    return [...listing, ...jobs, ...products].map((item) => ({
+      slug: item.slug,
+    }));
+  } catch (error) {
+    console.error('Error in generateStaticParams:', error);
+    return [];
+  }
 }
 
 export default async function page({ params }) {
