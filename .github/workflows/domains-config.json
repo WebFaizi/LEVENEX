@@ -1,7 +1,7 @@
 {
   "domains": [
     {
-      "domain": "desktoponrent.in",
+      "domain": "digitalstandeeonrent.in",
       "frontend_port": 3000,
       "backend_port": 5000
     }

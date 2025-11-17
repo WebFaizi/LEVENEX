@@ -2,26 +2,27 @@
 const nextConfig = {
   images: {
     domains: [
-      process.env.NEXT_PUBLIC_IMAGE_DOMAIN || 'api.digitalstandeeonrent.in',
-      'api.desktoponrent.co',
-      'localhost'
+      'api.digitalstandeeonrent.in',
+      'api.desktoponrent.in',
+      'localhost',
     ],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.digitalstandeeonrent.in',
+        hostname: 'api.digitalstandeeonrent.in',
       },
       {
         protocol: 'https',
-        hostname: '**.desktoponrent.co',
+        hostname: 'api.desktoponrent.in',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8002',
       },
     ],
-    formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
-    dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
+  output: 'standalone',
   compress: true,
   poweredByHeader: false,
   generateEtags: true,
