@@ -38,24 +38,24 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: |
-            LAPTOPRENTALFRONTEND/package-lock.json
-            LAPTOPRENTALBACKEND/package-lock.json
+            rzfrontend/package-lock.json
+            rzbackend/package-lock.json
 
       - name: Install Frontend Dependencies
         run: |
-          cd LAPTOPRENTALFRONTEND
+          cd rzfrontend
           npm ci
 
       - name: Build Next.js Frontend
         run: |
-          cd LAPTOPRENTALFRONTEND
+          cd rzfrontend
           npm run build
         env:
           NEXT_PUBLIC_BASE_URL: https://${{ matrix.domain }}
 
       - name: Install Backend Dependencies (if exists)
         run: |
-          cd LAPTOPRENTALBACKEND && npm ci || echo "No backend folder - skipping"
+          cd rzbackend && npm ci || echo "No backend folder - skipping"
         continue-on-error: true
 
       - name: Prepare production files (correct folder structure)
@@ -63,11 +63,11 @@ jobs:
           mkdir -p deploy-package
 
           # Frontend: copy entire folder (includes .next, public, src, and ALL other files)
-          cp -r LAPTOPRENTALFRONTEND deploy-package/
+          cp -r rzfrontend deploy-package/
 
           # Backend: copy entire folder (includes ALL files)
-          if [ -d "LAPTOPRENTALBACKEND" ]; then
-            cp -r LAPTOPRENTALBACKEND deploy-package/
+          if [ -d "rzbackend" ]; then
+            cp -r rzbackend deploy-package/
           fi
 
       # Deploy via SFTP
@@ -101,15 +101,15 @@ jobs:
             # Set proper permissions
             find . -type d -exec chmod 755 {} \;
             find . -type f -exec chmod 644 {} \;
-            chmod 755 LAPTOPRENTALFRONTEND/.next/cache || true
+            chmod 755 rzfrontend/.next/cache || true
 
             # Kill old processes using domain name
             pkill -f "node.*$DOMAIN" || true
             sleep 2
 
             # Start Backend
-            if [ -d "LAPTOPRENTALBACKEND" ] && [ -f "LAPTOPRENTALBACKEND/package.json" ]; then
-              cd LAPTOPRENTALBACKEND
+            if [ -d "rzbackend" ] && [ -f "rzbackend/package.json" ]; then
+              cd rzbackend
               echo "Starting backend on port ${{ matrix.backend_port }}..."
               npm install --production --silent
               # PORT=${{ matrix.backend_port }} nohup npm start > "$DOMAIN_PATH/backend.log" 2>&1 &
@@ -119,9 +119,9 @@ jobs:
               echo "No backend found, skipping."
             fi
 
-            # Start Frontend (must run from inside LAPTOPRENTALFRONTEND)
-            if [ -d "LAPTOPRENTALFRONTEND" ] && [ -f "LAPTOPRENTALFRONTEND/package.json" ]; then
-              cd LAPTOPRENTALFRONTEND
+            # Start Frontend (must run from inside rzfrontend)
+            if [ -d "rzfrontend" ] && [ -f "rzfrontend/package.json" ]; then
+              cd rzfrontend
               echo "Starting frontend on port ${{ matrix.frontend_port }}..."
               npm install --production --silent
               # PORT=${{ matrix.frontend_port }} nohup npm start > "$DOMAIN_PATH/app.log" 2>&1 &
