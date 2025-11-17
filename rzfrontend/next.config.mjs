@@ -1,11 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    domains: [
+      process.env.NEXT_PUBLIC_IMAGE_DOMAIN || 'api.digitalstandeeonrent.in',
+      'api.desktoponrent.co',
+      'localhost'
+    ],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**', // Match all domains
-      }
+        hostname: '**.digitalstandeeonrent.in',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.desktoponrent.co',
+      },
     ],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
