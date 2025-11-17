@@ -1,0 +1,1 @@
+{"version":3,"file":"routes.js","sourceRoot":"","sources":["../../../../../../src/infrastructure/webserver/express/v1/routes.ts"],"names":[],"mappings":";;;;;;AAAA,sDAA6B;AAC7B,4EAAqE;AAE9D,MAAM,YAAY,GAAG,GAAmB,EAAE;IAC7C,MAAM,MAAM,GAAG,iBAAO,CAAC,MAAM,EAAE,CAAC;IAChC,IAAA,qBAAQ,EAAC,MAAM,CAAC,CAAC;IAEjB,OAAO,MAAM,CAAC;AAClB,CAAC,CAAA;AALY,QAAA,YAAY,gBAKxB"}
