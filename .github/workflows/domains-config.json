@@ -1,12 +1,212 @@
 {
   "domains": [
     {
-      "domain": "laptoponrental.in",
+      "domain": "laptoprentalmumbai.net",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "laptoponrentmumbai.in",
+      "domain": "laptoprepairshops.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "laptopsonrental.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "laptopsonrentmumbai.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "laptopsrent.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "laptopsrent.net",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "laptopsrental.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "laptopsrental.org",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "laptopsrentalmumbai.com",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "laptopsrentnearme.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "laptopsrentnearme.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "macbookonrent.co",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "macbookonrent.co.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "macbookrental.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "macbookrental.net",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "onrentmumbai.com",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "pcrental.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "printerdealers.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "printeronrent.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "printerrepair.co.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "printerrepair.net",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "printerrepairs.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "printerrepairservice.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "printershops.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalaptop.org",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalaptops.net",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalhire.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalhired.com",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalkiosk.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentallaptop.co",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentallaptopcomputer.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentallaptopnearme.net",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalnearme.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalpc.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalwala.co.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalwala.net",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "repairshops.co.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "shopmiraroad.com",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "tabonrent.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "tvonrent.net",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "tvrent.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "tvrental.in",
       "frontend_port": 3000,
       "backend_port": 5000
     }

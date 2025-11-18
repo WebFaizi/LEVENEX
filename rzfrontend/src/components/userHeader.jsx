@@ -569,7 +569,7 @@ export default function UserHeader() {
                   <Link href="/" className="block w-full">
                   <Avatar className="w-full h-10">
                     <AvatarFallback className="text-xl font-bold text-black truncate">
-                    {hostname.length > 15 ? `${hostname.substring(0, 15)}...` : hostname}
+                    {hostname.length > 19 ? `${hostname.substring(0, 19)}...` : hostname}
                     </AvatarFallback>
                   </Avatar>
                   </Link>
