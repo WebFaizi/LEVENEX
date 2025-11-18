@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    unoptimized: true, // Disable Next.js image optimization for cPanel
     domains: [
       'api.digitalstandeeonrent.in',
       'api.desktoponrent.in',
@@ -9,11 +10,11 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api.digitalstandeeonrent.in',
+        hostname: '**.digitalstandeeonrent.in',
       },
       {
         protocol: 'https',
-        hostname: 'api.desktoponrent.in',
+        hostname: '**.desktoponrent.in',
       },
       {
         protocol: 'http',
