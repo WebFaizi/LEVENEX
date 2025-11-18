@@ -1,6 +1,5 @@
 name: Build & Deploy to cPanel (Multiple Domains)
 
-
 on:
   push:
     branches: [ main ]
