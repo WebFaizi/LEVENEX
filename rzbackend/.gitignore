@@ -137,3 +137,5 @@ dist
 .pnp.*
 # build/
 /sitemaps
+
+/uploads

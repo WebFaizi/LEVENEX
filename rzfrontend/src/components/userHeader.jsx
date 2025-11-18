@@ -557,24 +557,24 @@ export default function UserHeader() {
                 size="sm"
                 className="lg:hidden w-10 h-8 p-0 border-gray-400 text-gray-400 hover:border-gray-800 hover:text-gray-800 bg-transparent"
                 onClick={() => {
-                  setIsSidebarOpen(true);
-                }}
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
-            )}
+                    setIsSidebarOpen(true);
+                  }}
+                  >
+                  <Menu className="h-4 w-4" />
+                  </Button>
+                )}
 
-            {/* Logo */}
-            <div className="max-w-52 w-full">
-              <Link href="/" className="block w-full">
-                <Avatar className="w-full h-10">
-                  <AvatarFallback className="text-xl font-bold text-black">
-                    {hostname}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
-            </div>
-            {/* Search Section */}
+              
+                <div className="max-w-52 w-full">
+                  <Link href="/" className="block w-full">
+                  <Avatar className="w-full h-10">
+                    <AvatarFallback className="text-xl font-bold text-black truncate">
+                    {hostname.length > 15 ? `${hostname.substring(0, 15)}...` : hostname}
+                    </AvatarFallback>
+                  </Avatar>
+                  </Link>
+                </div>
+                {/* Search Section */}
             {!isAuthPage && (
               <div className="hidden sm:flex flex-wrap items-center gap-2 grow 2xl:grow-0 lg:gap-4 w-full sm:w-5/12 lg:w-2/4">
               <div className="relative w-5/12 lg:w-5/12">

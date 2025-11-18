@@ -1,9 +1,15 @@
 {
   "domains": [
     {
-      "domain": "digitalstandeeonrent.in",
+      "domain": "laptoponrental.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "laptoponrentmumbai.in",
       "frontend_port": 3000,
       "backend_port": 5000
     }
+    
   ]
 }
