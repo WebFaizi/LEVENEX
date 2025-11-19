@@ -1,37 +1,7 @@
 {
   "domains": [
     {
-      "domain": "rentalnearme.in",
-      "frontend_port": 3000,
-      "backend_port": 5000
-    },
-    {
-      "domain": "rentalpc.in",
-      "frontend_port": 3000,
-      "backend_port": 5000
-    },
-    {
-      "domain": "rentalwala.co.in",
-      "frontend_port": 3000,
-      "backend_port": 5000
-    },
-    {
-      "domain": "rentalwala.net",
-      "frontend_port": 3000,
-      "backend_port": 5000
-    },
-    {
-      "domain": "shopmiraroad.com",
-      "frontend_port": 3000,
-      "backend_port": 5000
-    },
-    {
-      "domain": "tabonrent.in",
-      "frontend_port": 3000,
-      "backend_port": 5000
-    },
-    {
-      "domain": "tvrental.in",
+      "domain": "tvonrent.net",
       "frontend_port": 3000,
       "backend_port": 5000
     }
