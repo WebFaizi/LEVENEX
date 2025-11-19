@@ -1,42 +1,37 @@
 {
   "domains": [
     {
-      "domain": "pcrental.in",
+      "domain": "rentalnearme.in",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "printershops.in",
+      "domain": "rentalpc.in",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "rentalaptop.org",
+      "domain": "rentalwala.co.in",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "rentalhire.in",
+      "domain": "rentalwala.net",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "rentalhired.com",
+      "domain": "shopmiraroad.com",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "rentalkiosk.in",
+      "domain": "tabonrent.in",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "rentallaptop.co",
-      "frontend_port": 3000,
-      "backend_port": 5000
-    },
-    {
-      "domain": "rentallaptopnearme.net",
+      "domain": "tvrental.in",
       "frontend_port": 3000,
       "backend_port": 5000
     }
