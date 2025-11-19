@@ -213,3 +213,78 @@
     
 //   ]
 // }
+
+
+
+
+
+// {
+//       "domain": "printershops.in",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "rentalaptop.org",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "rentalhire.in",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "rentalhired.com",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "rentalkiosk.in",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "rentallaptop.co",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "rentallaptopnearme.net",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "rentalwala.co.in",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "rentallaptopnearme.net",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "rentalwala.net",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "shopmiraroad.com",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "tabonrent.in",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "tvonrent.net",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     },
+//     {
+//       "domain": "tvrental.in",
+//       "frontend_port": 3000,
+//       "backend_port": 5000
+//     }
