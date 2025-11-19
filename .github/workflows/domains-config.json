@@ -1,27 +1,42 @@
 {
   "domains": [
     {
-      "domain": "laptopsrentalmumbai.com",
+      "domain": "pcrental.in",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "laptopsrentalnearme.in",
+      "domain": "printershops.in",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "laptopsrentnearme.in",
+      "domain": "rentalaptop.org",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "macbookrental.net",
+      "domain": "rentalhire.in",
       "frontend_port": 3000,
       "backend_port": 5000
     },
     {
-      "domain": "onrentmumbai.com",
+      "domain": "rentalhired.com",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentalkiosk.in",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentallaptop.co",
+      "frontend_port": 3000,
+      "backend_port": 5000
+    },
+    {
+      "domain": "rentallaptopnearme.net",
       "frontend_port": 3000,
       "backend_port": 5000
     }
